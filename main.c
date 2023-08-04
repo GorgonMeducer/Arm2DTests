@@ -27,8 +27,7 @@
 #   include "arm_2d_benchmark.h"
 #endif
 
-#include "arm_2d_scene_meter.h"
-#include "arm_2d_scene_watch.h"
+#include "arm_2d_scene_cmsis_stream.h"
 
 #if defined(__clang__)
 #   pragma clang diagnostic push
@@ -57,56 +56,29 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 /*============================ LOCAL VARIABLES ===============================*/
+
+#define NB_SAMPLES 256 
+#define NB_FFT 256
+
+const q15_t samples[NB_SAMPLES]={0, 5880, 11148, 14557, 15551, 12938, 7604, 1082, -4957, -8462, -8246, -4159, 2832, 11350, 19344, 25186, 26672, 25042, 20802, 14436, 8997, 5870, 2533, 6496, 9387, 12694, 17171, 19751, 22417, 22377, 21470, 18885, 16383, 14818, 13497, 12465, 12955, 13773, 14973, 16578, 18190, 20367, 19145, 21667, 17084, 12560, 8550, 94, -1327, 3152, 4536, 8235, 15130, 18731, 20069, 22447, 17417, 10119, 1782, -5472, -11581, -12624, -10419, -6335, -1, 4379, 11625, 11197, 8872, 4984, -3692, -8762, -9138, -12017, -17138, -12781, -10373, -9288, -8558, -7625, -8253, -8950, -10356, -12805, -15044, -17894, -17696, -21111, -19107, -18565, -15028, -9887, -2585, -11362, -3458, -8830, -16384, -23353, -25837, -32509, -31053, -23838, -17788, -11473, -6239, 164, -51, -3796, -8244, -14733, -20903, -22389, -18274, -25087, -15841, -11366, -3446, -2627, -3743, 2653, -242, -4568, -5432, -7091, -10413, -7170, -5146, -4877, -1, 4152, 10623, 8572, 14857, 12699, 7339, 3661, -774, -2286, 4217, -3098, 5421, 10150, 13925, 14256, 26779, 19618, 19757, 13952, 10606, 5961, 6187, 4610, 5479, 10669, 17861, 26228, 31185, 22198, 28899, 19524, 16383, 10149, 2701, 7322, 12074, 13330, 14404, 19710, 26033, 18357, 25953, 18755, 17352, 12654, 7520, 4827, -975, 1210, 8291, 9436, 12569, 13301, 23764, 20351, 17718, 8129, 2960, 686, -9865, -6621, -3424, -6684, -1, 3971, 10580, 5628, 5131, 6410, -2488, -7114, -15574, -12642, -15904, -16439, -13273, -8618, -2103, -7660, 1194, 1435, -10686, -12681, -15992, -17349, -22320, -30464, -17904, -17131, -12513, -7734, -10504, -11000, -12327, -13929, -16384, -20781, -29921, -19991, -24396, -18147, -18465, -14368, -5828, -2586, -10052, -11207, -11906, -14746, -18242, -26581, -21172, -25062, -15056, -10126, -5811, 1114, 7052, 1797, 657, -4280, -6272, -14375, -11252, -17919, -14281, -2424};
+q15_t fftAmp[NB_FFT>>1]={265, 316, 16601, 236, 227, 91, 63, 145, 199, 240, 99, 384, 84, 715, 1231, 1107, 1023, 821, 351, 473, 10142, 199, 195, 405, 418, 1464, 1313, 333, 213, 671, 115, 191, 207, 49, 219, 142, 40, 102, 258, 170, 113, 230, 225, 148, 277, 128, 368, 88, 153, 224, 202, 188, 406, 705, 105, 155, 470, 363, 151, 360, 34, 186, 47, 121, 167, 294, 394, 657, 524, 422, 224, 264, 403, 300, 221, 178, 132, 224, 575, 184, 182, 344, 118, 467, 77, 196, 186, 356, 337, 418, 194, 248, 316, 361, 270, 443, 228, 233, 426, 138, 414, 269, 148, 124, 36, 510, 590, 465, 398, 360, 155, 288, 338, 154, 92, 123, 249, 144, 447, 121, 330, 404, 96, 328, 17, 283, 249, 450};
 /*============================ IMPLEMENTATION ================================*/
 
-void scene_meter_loader(void) 
+
+user_scene_cmsis_stream_t *streamScene;
+
+user_scene_cmsis_stream_t *scene_cmsis_stream_loader(void) 
 {
-    arm_2d_scene_meter_init(&DISP0_ADAPTER);
+    return(arm_2d_scene_cmsis_stream_init(NB_FFT,NB_SAMPLES,&DISP0_ADAPTER));
 }
 
-void scene_watch_loader(void) 
-{
-    arm_2d_scene_watch_init(&DISP0_ADAPTER);
-}
-
-
-void scene0_loader(void) 
-{
-    arm_2d_scene0_init(&DISP0_ADAPTER);
-}
-
-void scene1_loader(void) 
-{
-    arm_2d_scene1_init(&DISP0_ADAPTER);
-}
-
-void scene2_loader(void) 
-{
-    arm_2d_scene2_init(&DISP0_ADAPTER);
-}
-
-void scene3_loader(void) 
-{
-    arm_2d_scene3_init(&DISP0_ADAPTER);
-}
-
-void scene4_loader(void) 
-{
-    arm_2d_scene4_init(&DISP0_ADAPTER);
-}
-
-typedef void scene_loader_t(void);
+typedef user_scene_cmsis_stream_t *scene_loader_t(void);
 
 static scene_loader_t * const c_SceneLoaders[] = {
-    scene0_loader,
-    scene1_loader,
-    scene_meter_loader,
-    scene3_loader,
-    scene4_loader,
-    scene2_loader,
-    //scene_watch_loader,
+    scene_cmsis_stream_loader
 };
 
+static user_scene_cmsis_stream_t *currentScene=NULL;
 
 /* load scene one by one */
 void before_scene_switching_handler(void *pTarget,
@@ -120,7 +92,7 @@ void before_scene_switching_handler(void *pTarget,
     }
     
     /* call loader */
-    c_SceneLoaders[s_chIndex]();
+    currentScene=c_SceneLoaders[s_chIndex]();
     s_chIndex++;
 }
 
@@ -144,10 +116,35 @@ int app_2d_main_thread (void *argument)
     arm_2d_scene_player_switch_to_next_scene(&DISP0_ADAPTER);
 #endif
 
+    int px=0;
+    int d=2;
+    #define Q 2
+    
+    
     while(1) {
         if (arm_fsm_rt_cpl == disp_adapter0_task()) {
             VT_sdl_flush(1);
+            px+=d;
+            if (px>=(20<<Q))
+            {
+                px=(20<<Q);
+                d=-d;
+            }
+            if (px<=-(20<<Q))
+            {   
+                px=-(20<<Q);
+                d=-d;
+            }
+            arm2d_scene_cmsis_stream_new_pos(currentScene,px>>Q);
+
         }
+        else
+        {
+            arm2d_scene_cmsis_stream_new_spectrum(currentScene,fftAmp);
+            arm2d_scene_cmsis_stream_new_amplitude(currentScene,samples);
+        }
+        
+        
     }
 
     return 0;

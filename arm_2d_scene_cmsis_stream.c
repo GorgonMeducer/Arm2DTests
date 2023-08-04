@@ -20,10 +20,8 @@
 
 #include "arm_2d.h"
 
-#ifdef RTE_Acceleration_Arm_2D_Scene0
-
-#define __USER_SCENE0_IMPLEMENT__
-#include "arm_2d_scene_0.h"
+#define __USER_SCENE_CMSIS_STREAM_IMPLEMENT__
+#include "arm_2d_scene_cmsis_stream.h"
 
 #include "arm_2d_helper.h"
 #include "arm_extra_controls.h"
@@ -61,6 +59,12 @@
 
 /*============================ MACROS ========================================*/
 
+/*
+ * note: If you want to change the background picture, you can simply update 
+ *       the macro c_tileCMSISStreamPanel to your own tile of the background picture.
+ * 
+ */
+
 #if __GLCD_CFG_COLOUR_DEPTH__ == 8
 
 #   define c_tileCMSISLogo          c_tileCMSISLogoGRAY8
@@ -75,6 +79,8 @@
 #else
 #   error Unsupported colour depth!
 #endif
+
+
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 #undef this
@@ -91,10 +97,30 @@ extern const arm_2d_tile_t c_tileCMSISLogoA4Mask;
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-
-static void __on_scene0_depose(arm_2d_scene_t *ptScene)
+void arm2d_scene_cmsis_stream_new_spectrum(user_scene_cmsis_stream_t *ptScene,
+    const q15_t *fftSpectrum)
 {
-    user_scene_0_t *ptThis = (user_scene_0_t *)ptScene;
+    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
+    ptThis->fftSpectrum = fftSpectrum;
+}
+
+void arm2d_scene_cmsis_stream_new_amplitude(user_scene_cmsis_stream_t *ptScene,
+    const q15_t *amplitude)
+{
+    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
+    ptThis->amplitude = amplitude;
+}
+
+void arm2d_scene_cmsis_stream_new_pos(user_scene_cmsis_stream_t *ptScene,
+    const int pos)
+{
+    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
+    ptThis->px = pos;
+}
+
+static void __on_scene_cmsis_stream_depose(arm_2d_scene_t *ptScene)
+{
+    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
     ARM_2D_UNUSED(ptThis);
     
     ptScene->ptPlayer = NULL;
@@ -110,123 +136,144 @@ static void __on_scene0_depose(arm_2d_scene_t *ptScene)
 }
 
 /*----------------------------------------------------------------------------*
- * Scene 0                                                                    *
+ * Scene cmsis stream                                                                    *
  *----------------------------------------------------------------------------*/
 
-static void __on_scene0_background_start(arm_2d_scene_t *ptScene)
+static void __on_scene_cmsis_stream_background_start(arm_2d_scene_t *ptScene)
 {
-    user_scene_0_t *ptThis = (user_scene_0_t *)ptScene;
+    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
     ARM_2D_UNUSED(ptThis);
 
 }
 
-static void __on_scene0_background_complete(arm_2d_scene_t *ptScene)
+static void __on_scene_cmsis_stream_background_complete(arm_2d_scene_t *ptScene)
 {
-    user_scene_0_t *ptThis = (user_scene_0_t *)ptScene;
+    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
     ARM_2D_UNUSED(ptThis);
 
 }
 
 
-static void __on_scene0_frame_start(arm_2d_scene_t *ptScene)
+static void __on_scene_cmsis_stream_frame_start(arm_2d_scene_t *ptScene)
 {
-    user_scene_0_t *ptThis = (user_scene_0_t *)ptScene;
-    ARM_2D_UNUSED(ptThis);
-
-}
-
-static void __on_scene0_frame_complete(arm_2d_scene_t *ptScene)
-{
-    user_scene_0_t *ptThis = (user_scene_0_t *)ptScene;
+    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
     ARM_2D_UNUSED(ptThis);
     
-    /* switch to next scene after 3s */
-    if (arm_2d_helper_is_time_out(3000, &this.lTimestamp[0])) {
-        arm_2d_scene_player_switch_to_next_scene(ptScene->ptPlayer);
-    }
 }
 
-static void __before_scene0_switching_out(arm_2d_scene_t *ptScene)
+static void __on_scene_cmsis_stream_frame_complete(arm_2d_scene_t *ptScene)
 {
-    user_scene_0_t *ptThis = (user_scene_0_t *)ptScene;
+    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
+    ARM_2D_UNUSED(ptThis);
+
+    /* switch to next scene after 10s */
+    /*if (arm_2d_helper_is_time_out(10000, &this.lTimestamp[0])) {
+        arm_2d_scene_player_switch_to_next_scene(ptScene->ptPlayer);
+    }
+    */
+}
+
+static void __before_scene_cmsis_stream_switching_out(arm_2d_scene_t *ptScene)
+{
+    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
     ARM_2D_UNUSED(ptThis);
 
 }
 
 static
-IMPL_PFB_ON_DRAW(__pfb_draw_scene0_handler)
+IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_background_handler)
 {
-    user_scene_0_t *ptThis = (user_scene_0_t *)pTarget;
+    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)pTarget;
+    ARM_2D_UNUSED(ptTile);
+    ARM_2D_UNUSED(bIsNewFrame);
+    /*-----------------------draw back ground begin-----------------------*/
+
+
+
+    /*-----------------------draw back ground end  -----------------------*/
+    arm_2d_op_wait_async(NULL);
+
+    return arm_fsm_rt_cpl;
+}
+
+#include <stdio.h>
+static
+IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
+{
+    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)pTarget;
     ARM_2D_UNUSED(ptTile);
     ARM_2D_UNUSED(bIsNewFrame);
     
-    arm_2d_canvas(ptTile, __top_canvas) {
+    arm_2d_canvas(ptTile, __canvas) {
     /*-----------------------draw the foreground begin-----------------------*/
         
         /* following code is just a demo, you can remove them */
         
         arm_2d_fill_colour(ptTile, NULL, GLCD_COLOR_WHITE);
 
-        arm_2d_align_centre(__top_canvas, 200, 100 ) {
-            draw_round_corner_box(  ptTile, 
-                                    &__centre_region, 
-                                    GLCD_COLOR_WHITE, 
-                                    255,
-                                    bIsNewFrame);
-            
+
+        /* draw the cmsis logo using mask in the centre of the screen */
+        arm_2d_align_top_centre(__canvas, c_tileCMSISLogo.tRegion.tSize) {
+
+            arm_2d_region_t logo;
+
+            logo = __top_centre_region;
+            logo.tLocation.iX = logo.tLocation.iX + ptThis->px;
+
+            arm_2d_tile_copy_with_src_mask(&c_tileCMSISLogo,
+                                           &c_tileCMSISLogoMask,
+                                           ptTile,
+                                           &logo,
+                                           ARM_2D_CP_MODE_COPY);
+
+
             arm_2d_op_wait_async(NULL);
             
-            draw_round_corner_border(   ptTile, 
-                                        &__centre_region, 
-                                        GLCD_COLOR_BLACK, 
-                                        (arm_2d_border_opacity_t)
-                                            {32, 32, 255-64, 255-64},
-                                        (arm_2d_corner_opacity_t)
-                                            {0, 128, 128, 128});
-                                    
-        }
+            
 
-
-    #if 0
-        /* draw the cmsis logo in the centre of the screen */
-        arm_2d_align_centre(__top_canvas, c_tileCMSISLogo.tRegion.tSize) {
-            arm_2d_tile_copy_with_src_mask( &c_tileCMSISLogo,
-                                            &c_tileCMSISLogoMask,
-                                            ptTile,
-                                            &__centre_region,
-                                            ARM_2D_CP_MODE_COPY);
+            }
+        
+        arm_2d_layout(__canvas) {
+        __item_line_vertical(__GLCD_CFG_SCEEN_WIDTH__,__GLCD_CFG_SCEEN_HEIGHT__>>1) {
+            spectrum_display_show(&(ptThis->tSpectrum),
+                ptTile,&__item_region,
+                ptThis->fftSpectrum,
+                __GLCD_CFG_SCEEN_WIDTH__ - 10,
+                __GLCD_CFG_SCEEN_HEIGHT__>>1,
+                bIsNewFrame);
+          }
+        __item_line_vertical(__GLCD_CFG_SCEEN_WIDTH__,__GLCD_CFG_SCEEN_HEIGHT__>>1) {
+            amplitude_display_show(&(ptThis->tAmplitude),
+                ptTile,&__item_region,
+                ptThis->amplitude,
+                __GLCD_CFG_SCEEN_WIDTH__ - 10,
+                __GLCD_CFG_SCEEN_HEIGHT__>>1,
+                bIsNewFrame);
+          }
         }
-    #else
-        /* draw the cmsis logo using mask in the centre of the screen */
-        arm_2d_align_centre(__top_canvas, c_tileCMSISLogo.tRegion.tSize) {
-            arm_2d_fill_colour_with_a4_mask_and_opacity(   
-                                                ptTile, 
-                                                &__centre_region, 
-                                                &c_tileCMSISLogoA4Mask, 
-                                                (__arm_2d_color_t){GLCD_COLOR_BLACK},
-                                                128);
-        }
-    #endif
+        
 
         /* draw text at the top-left corner */
 
-        arm_lcd_text_set_target_framebuffer((arm_2d_tile_t *)ptTile);
-        arm_lcd_text_set_font(&ARM_2D_FONT_6x8.use_as__arm_2d_font_t);
-        arm_lcd_text_set_draw_region(NULL);
-        arm_lcd_text_set_colour(GLCD_COLOR_RED, GLCD_COLOR_WHITE);
-        arm_lcd_text_location(0,0);
-        arm_lcd_puts("Scene 0");
+        //arm_lcd_text_set_target_framebuffer((arm_2d_tile_t *)ptTile);
+        //arm_lcd_text_set_font(&ARM_2D_FONT_6x8.use_as__arm_2d_font_t);
+        //arm_lcd_text_set_draw_region(NULL);
+        //arm_lcd_text_set_colour(GLCD_COLOR_RED, GLCD_COLOR_WHITE);
+        //arm_lcd_text_location(0,0);
+        //arm_lcd_puts("Scene CMSIS-Stream");
 
     /*-----------------------draw the foreground end  -----------------------*/
     }
+    
     arm_2d_op_wait_async(NULL);
 
     return arm_fsm_rt_cpl;
 }
 
-ARM_NONNULL(1)
-user_scene_0_t *__arm_2d_scene0_init(   arm_2d_scene_player_t *ptDispAdapter, 
-                                        user_scene_0_t *ptThis)
+#include <stdio.h>
+ARM_NONNULL(3)
+user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int nbAmps,arm_2d_scene_player_t *ptDispAdapter, 
+                                        user_scene_cmsis_stream_t *ptThis)
 {
     bool bUserAllocated = false;
     assert(NULL != ptDispAdapter);
@@ -234,13 +281,13 @@ user_scene_0_t *__arm_2d_scene0_init(   arm_2d_scene_player_t *ptDispAdapter,
     /*! define dirty regions */
     IMPL_ARM_2D_REGION_LIST(s_tDirtyRegions, static)
 
-        /* a dirty region to be specified at runtime*/
+        /* the dirty region for text display*/
         ADD_REGION_TO_LIST(s_tDirtyRegions,
             0  /* initialize at runtime later */
         ),
-        
+
         /* add the last region:
-         * it is the top left corner for text display 
+         * it is the top left corner for text display
          */
         ADD_LAST_REGION_TO_LIST(s_tDirtyRegions,
             .tLocation = {
@@ -248,54 +295,63 @@ user_scene_0_t *__arm_2d_scene0_init(   arm_2d_scene_player_t *ptDispAdapter,
                 .iY = 0,
             },
             .tSize = {
-                .iWidth = __GLCD_CFG_SCEEN_WIDTH__,
-                .iHeight = 8,
+                .iWidth = 240,
+                .iHeight = 240,
             },
         ),
 
     END_IMPL_ARM_2D_REGION_LIST(s_tDirtyRegions)
     
+    s_tDirtyRegions[dimof(s_tDirtyRegions)-1].ptNext = NULL;
+
     /* get the screen region */
     arm_2d_region_t tScreen
         = arm_2d_helper_pfb_get_display_area(
             &ptDispAdapter->use_as__arm_2d_helper_pfb_t);
     
-    /* initialise dirty region 0 at runtime
-     * this demo shows that we create a region in the centre of a screen(320*240)
-     * for a image stored in the tile c_tileCMSISLogoMask
-     */
-    arm_2d_align_centre(tScreen, c_tileCMSISLogoMask.tRegion.tSize) {
-        s_tDirtyRegions[0].tRegion = __centre_region;
-    }
+   
+    
     
     if (NULL == ptThis) {
-        ptThis = (user_scene_0_t *)malloc(sizeof(user_scene_0_t));
+        ptThis = (user_scene_cmsis_stream_t *)malloc(sizeof(user_scene_cmsis_stream_t));
         assert(NULL != ptThis);
         if (NULL == ptThis) {
             return NULL;
         }
+        
     } else {
         bUserAllocated = true;
+        
     }
-    memset(ptThis, 0, sizeof(user_scene_0_t));
 
-    *ptThis = (user_scene_0_t){
+    memset(ptThis, 0, sizeof(user_scene_cmsis_stream_t));
+       
+    
+    *ptThis = (user_scene_cmsis_stream_t){
         .use_as__arm_2d_scene_t = {
             /* Please uncommon the callbacks if you need them
              */
-            .fnScene        = &__pfb_draw_scene0_handler,
+            //.fnBackground   = &__pfb_draw_scene_cmsis_stream_background_handler,
+            .fnScene        = &__pfb_draw_scene_cmsis_stream_handler,
             .ptDirtyRegion  = (arm_2d_region_list_item_t *)s_tDirtyRegions,
             
 
-            //.fnOnBGStart    = &__on_scene0_background_start,
-            //.fnOnBGComplete = &__on_scene0_background_complete,
-            .fnOnFrameStart = &__on_scene0_frame_start,
-            //.fnBeforeSwitchOut = &__before_scene0_switching_out,
-            .fnOnFrameCPL   = &__on_scene0_frame_complete,
-            .fnDepose       = &__on_scene0_depose,
+            //.fnOnBGStart    = &__on_scene_cmsis_stream_background_start,
+            //.fnOnBGComplete = &__on_scene_cmsis_stream_background_complete,
+            .fnOnFrameStart = &__on_scene_cmsis_stream_frame_start,
+            //.fnBeforeSwitchOut = &__before_scene_cmsis_stream_switching_out,
+            .fnOnFrameCPL   = &__on_scene_cmsis_stream_frame_complete,
+            .fnDepose       = &__on_scene_cmsis_stream_depose,
         },
         .bUserAllocated = bUserAllocated,
     };
+
+    ptThis->fftSpectrum = NULL;
+    spectrum_display_init(&(ptThis->tSpectrum),nbFFTBins);
+    amplitude_display_init(&(ptThis->tAmplitude),nbAmps);
+    ptThis->px=0;
+
+
 
     arm_2d_scene_player_append_scenes(  ptDispAdapter, 
                                         &this.use_as__arm_2d_scene_t, 
@@ -304,12 +360,7 @@ user_scene_0_t *__arm_2d_scene0_init(   arm_2d_scene_player_t *ptDispAdapter,
     return ptThis;
 }
 
-
-
-
 #if defined(__clang__)
 #   pragma clang diagnostic pop
-#endif
-
 #endif
 

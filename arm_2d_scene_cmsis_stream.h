@@ -16,14 +16,17 @@
  * limitations under the License.
  */
 
-#ifndef __ARM_2D_SCENE_WATCH_H__
-#define __ARM_2D_SCENE_WATCH_H__
+#ifndef __ARM_2D_SCENE_CMSIS_STREAM_H__
+#define __ARM_2D_SCENE_CMSIS_STREAM_H__
 
 /*============================ INCLUDES ======================================*/
 
 #include "arm_2d.h"
 
 #include "arm_2d_helper_scene.h"
+#include "arm_2d_helper.h"
+#include "spectrum_display.h"
+#include "amplitude_display.h"
 
 #ifdef   __cplusplus
 extern "C" {
@@ -46,8 +49,8 @@ extern "C" {
 /*============================ MACROS ========================================*/
 
 /* OOC header, please DO NOT modify  */
-#ifdef __USER_SCENE_WATCH_IMPLEMENT__
-#   undef __USER_SCENE_WATCH_IMPLEMENT__
+#ifdef __USER_SCENE_CMSIS_STREAM_IMPLEMENT__
+#   undef __USER_SCENE_CMSIS_STREAM_IMPLEMENT__
 #   define __ARM_2D_IMPL__
 #endif
 #include "arm_2d_utils.h"
@@ -55,48 +58,57 @@ extern "C" {
 /*============================ MACROFIED FUNCTIONS ===========================*/
 
 /*!
- * \brief initalize scene_watch and add it to a user specified scene player
+ * \brief initalize scene_meter and add it to a user specified scene player
  * \param[in] __DISP_ADAPTER_PTR the target display adatper (i.e. scene player)
  * \param[in] ... this is an optional parameter. When it is NULL, a new 
- *            user_scene_watch_t will be allocated from HEAP and freed on
+ *            user_scene_meter_t will be allocated from HEAP and freed on
  *            the deposing event. When it is non-NULL, the life-cycle is managed
  *            by user.
- * \return user_scene_watch_t* the user_scene_watch_t instance
+ * \return user_scene_meter_t* the user_scene_meter_t instance
  */
-#define arm_2d_scene_watch_init(__DISP_ADAPTER_PTR, ...)                    \
-            __arm_2d_scene_watch_init((__DISP_ADAPTER_PTR), (NULL, ##__VA_ARGS__))
+#define arm_2d_scene_cmsis_stream_init(_NBFFT,_NBAMP,__DISP_ADAPTER_PTR, ...)                    \
+            __arm_2d_scene_cmsis_stream_init((_NBFFT),(_NBAMP),(__DISP_ADAPTER_PTR), (NULL, ##__VA_ARGS__))
 
 /*============================ TYPES =========================================*/
 /*!
- * \brief a user class for scene watch
+ * \brief a user class for scene meter
  */
-typedef struct user_scene_watch_t user_scene_watch_t;
+typedef struct user_scene_cmsis_stream_t user_scene_cmsis_stream_t;
 
-struct user_scene_watch_t {
+struct user_scene_cmsis_stream_t {
     implement(arm_2d_scene_t);                                                  //! derived from class: arm_2d_scene_t
 
 ARM_PRIVATE(
     /* place your private member here, following two are examples */
-    int64_t lTimestamp[4];
+    int64_t lTimestamp[2];
+
     bool bUserAllocated;
-
-    struct {
-        arm_2d_op_fill_cl_msk_opa_trans_t   tOP;
-        arm_2d_helper_transform_t           tHelper;
-    } Pointers[3];
-
+    spectrum_display_t tSpectrum;
+    amplitude_display_t tAmplitude;
+    int px;
+    
 )
     /* place your public member here */
-    
+    const q15_t *fftSpectrum;
+    const q15_t *amplitude;
 };
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 
-ARM_NONNULL(1)
+extern void arm2d_scene_cmsis_stream_new_spectrum(user_scene_cmsis_stream_t *ptScene,
+    const q15_t *fftSpectrum);
+
+extern void arm2d_scene_cmsis_stream_new_amplitude(user_scene_cmsis_stream_t *ptScene,
+    const q15_t *amplitude);
+
+extern void arm2d_scene_cmsis_stream_new_pos(user_scene_cmsis_stream_t *ptScene,
+    const int pos);
+
+ARM_NONNULL(3)
 extern
-user_scene_watch_t *__arm_2d_scene_watch_init(   arm_2d_scene_player_t *ptDispAdapter, 
-                                        user_scene_watch_t *ptScene);
+user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init( int nbFFTBins,  int nbAmplitudes,arm_2d_scene_player_t *ptDispAdapter, 
+                                        user_scene_cmsis_stream_t *ptScene);
 
 #if defined(__clang__)
 #   pragma clang diagnostic pop

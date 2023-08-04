@@ -10,8 +10,6 @@ add_compile_options(
     -std=gnu11 -g
     -ffunction-sections 
     -fdata-sections
-    -fno-ms-extensions
-    -Wno-macro-redefined
     -Ofast
     -flto)
 
@@ -19,21 +17,16 @@ add_link_options(-flto)
 
 
 add_executable(arm2d_demo  main.c
-        arm_2d_scene_0.c 
-        arm_2d_scene_1.c    
-        arm_2d_scene_2.c    
-        arm_2d_scene_3.c 
-        arm_2d_scene_4.c       
-        arm_2d_scene_watch.c
-        arm_2d_scene_meter.c
+        arm_2d_scene_cmsis_stream.c
         platform/Virtual_TFT_Port.c     
         platform/arm_2d_disp_adapter_0.c
-        templates/MeterPanel.c     
+        controls/spectrum_display.c 
+        controls/amplitude_display.c  
 )
 
 target_compile_definitions(arm2d_demo PRIVATE _THREAD_SAFE SDL_DISABLE_ARM_NEON_H)
 
-target_include_directories(arm2d_demo PUBLIC . platform templates)
+target_include_directories(arm2d_demo PUBLIC . platform templates controls)
 
 option(HOST "" ON)
 add_subdirectory(${DSP}/Source bin_dsp)
@@ -43,8 +36,8 @@ option(ARM2D_HOST "" ON)
 option(ARM2D_CONTROLS "" ON)
 option(ARM2D_HELPER "" ON)
 option(ARM2D_LCD_PRINTF "" ON)
-option(ARM2D_BENCHMARK_GENERIC "" ON)
-option(ARM2D_BENCHMARK_WATCHPANEL "" ON)
+option(ARM2D_BENCHMARK_GENERIC "" OFF)
+option(ARM2D_BENCHMARK_WATCHPANEL "" OFF)
 option(ARM2D_ALPHA_BLENDING "" ON)
 option(ARM2D_TRANSFORM "" ON)
 add_subdirectory(../Arm-2D arm2d_demo_bin)
