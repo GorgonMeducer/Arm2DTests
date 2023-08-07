@@ -85,7 +85,10 @@ ARM_PRIVATE(
     bool bUserAllocated;
     spectrum_display_t tSpectrum;
     amplitude_display_t tAmplitude;
-    int px;
+    int pos;
+    int oldPos;
+    int originDirty;
+    int speedPos;
     
 )
     /* place your public member here */
@@ -102,8 +105,8 @@ extern void arm2d_scene_cmsis_stream_new_spectrum(user_scene_cmsis_stream_t *ptS
 extern void arm2d_scene_cmsis_stream_new_amplitude(user_scene_cmsis_stream_t *ptScene,
     const q15_t *amplitude);
 
-extern void arm2d_scene_cmsis_stream_new_pos(user_scene_cmsis_stream_t *ptScene,
-    const int pos);
+extern void arm2d_scene_cmsis_stream_new_speed(user_scene_cmsis_stream_t *ptScene,
+    const int speed);
 
 ARM_NONNULL(3)
 extern

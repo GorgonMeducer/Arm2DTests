@@ -42,6 +42,7 @@ add_executable(arm2d_demo  main.c
         arm_2d_scene_cmsis_stream.c
         controls/spectrum_display.c 
         controls/amplitude_display.c  
+        cmsis_logo.c
 )
 
 if (HOST)
@@ -53,7 +54,6 @@ if (HOST)
 
     option(ARM2D_HOST "" ON)
     target_compile_definitions(arm2d_demo PUBLIC HOST)
-
 endif()
 
 
@@ -70,8 +70,16 @@ option(ARM2D_ALPHA_BLENDING "" ON)
 option(ARM2D_TRANSFORM "" ON)
 if (HOST)
 add_subdirectory(${ARM2D} arm2d_demo_bin)
+target_compile_definitions(ARM2D PUBLIC __ARM_2D_CFG_UNSAFE_IGNORE_ALPHA_255_COMPENSATION__ 
+    __DISP0_CFG_PFB_BLOCK_HEIGHT__=240 
+    __DISP0_CFG_DISABLE_NAVIGATION_LAYER__=0)
 else()
 add_subdirectory(${ARM2D_RP2040} arm2d_rp2040_bin)
+#Don't use partial framebuffer to use
+#fast draw point function
+target_compile_definitions(ARM2D PUBLIC __ARM_2D_CFG_UNSAFE_IGNORE_ALPHA_255_COMPENSATION__ 
+    __DISP0_CFG_PFB_BLOCK_HEIGHT__=240 
+    __DISP0_CFG_DISABLE_NAVIGATION_LAYER__=0)
 endif()
 
 if (HOST)

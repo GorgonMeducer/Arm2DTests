@@ -56,7 +56,7 @@ void amplitude_display_init(amplitude_display_t *ptCFG,int nbAmpValues)
    ptCFG->nbAmpValues = nbAmpValues;
 
 }
-
+#include <stdio.h>
 #define COLOR GLCD_COLOR_BLUE
 static void drawLine(uint32_t dx, uint32_t dy,const arm_2d_tile_t *ptTarget,uint32_t ax,q15_t ay,q15_t by)
 {
@@ -65,10 +65,16 @@ static void drawLine(uint32_t dx, uint32_t dy,const arm_2d_tile_t *ptTarget,uint
      if (abs(by-ay)<=1)
      {
        tLocation.iX = ax>>15;tLocation.iY=dy-ay;
-       arm_2d_rgb565_draw_point(ptTarget,tLocation,COLOR);
+       //arm_2d_rgb565_draw_point(ptTarget,tLocation,COLOR);
+                   printf("%d %d\n",tLocation.iX,tLocation.iY);
+
+       arm_2d_rgb16_draw_point_fast(ptTarget,tLocation,COLOR);
        uint32_t n=ax+dx;
        tLocation.iX = n>>15;tLocation.iY=dy-by;
-       arm_2d_rgb565_draw_point(ptTarget,tLocation,COLOR);
+       //arm_2d_rgb565_draw_point(ptTarget,tLocation,COLOR);
+                  printf("%d %d\n",tLocation.iX,tLocation.iY);
+
+       arm_2d_rgb16_draw_point_fast(ptTarget,tLocation,COLOR);
      }
      else
      {
@@ -93,7 +99,10 @@ static void drawLine(uint32_t dx, uint32_t dy,const arm_2d_tile_t *ptTarget,uint
         for(int i=start;i<end;i++)
         {
             tLocation.iX = x>>15;tLocation.iY=dy-i;
-            arm_2d_rgb565_draw_point(ptTarget,tLocation,COLOR);
+            printf("%d %d\n",tLocation.iX,tLocation.iY);
+            //arm_2d_rgb565_draw_point(ptTarget,tLocation,COLOR);
+            arm_2d_rgb16_draw_point_fast(ptTarget,tLocation,COLOR);
+
             x+=delta;
         }
      }
@@ -112,6 +121,12 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
 {
     int_fast16_t iWidth = width;
     int_fast16_t iHeight = height;
+
+   arm_2d_region_t ptValidRegion;
+   arm_2d_location_t ptOffset;
+   const arm_2d_tile_t *root = arm_2d_tile_get_root( ptTarget,
+                                            &ptValidRegion,
+                                            &ptOffset);
    
     arm_2d_region_t contentRegion = *amplitudeRegion;
 
@@ -127,6 +142,7 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
     contentRegion.tLocation.iY += pad;
 
 
+    /*
     draw_round_corner_box(  ptTarget, 
                                     &contentRegion, 
                                     GLCD_COLOR_OLIVE, 
@@ -134,6 +150,7 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
                                     bIsNewFrame);
 
     arm_2d_op_wait_async(NULL);
+    */
 
     uint32_t dx = (uint32_t)(1<<15) * iWidth / ptCFG->nbAmpValues;
     uint32_t dy=contentRegion.tLocation.iY+(iHeight>>1); 
@@ -147,13 +164,14 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
     {
         // >> 16 because half scale of LCD
         q15_t newY = (((q31_t) values[i] * ((iHeight>>1)-1)) >> 15);
-        drawLine(dx,dy,ptTarget,currentX,currentY,newY);
+        //drawLine(dx,dy,root,currentX,currentY,newY);
         //tLocation.iX = currentX>>15;tLocation.iY=dy-newY;
         //arm_2d_rgb565_draw_point(ptTarget,tLocation,GLCD_COLOR_RED);
         currentX = currentX+dx;
         currentY = newY;
     }
 
+    /*
     draw_round_corner_border(   ptTarget, 
                               &contentRegion, 
                                 GLCD_COLOR_BLACK, 
@@ -163,6 +181,7 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
                                 {255,255,255,255});
     
     arm_2d_op_wait_async(NULL);
+    */
         
 }
 

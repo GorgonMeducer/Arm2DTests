@@ -60,7 +60,7 @@ void spectrum_display_init(spectrum_display_t *ptCFG,int nbFFTBins)
    ptCFG->nbFFTbins = nbFFTBins;
 }
 
-#define BINWIDTH 4UL
+#define BINWIDTH 6UL
 #define PADX 4
 #define PADY 4
 #define PADFFT 6
@@ -89,6 +89,7 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
     contentRegion.tLocation.iY += pad;
 
 
+    /*
     draw_round_corner_box(  ptTarget, 
                                     &contentRegion, 
                                     GLCD_COLOR_OLIVE, 
@@ -96,6 +97,7 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
                                     bIsNewFrame);
 
     arm_2d_op_wait_async(NULL);
+    */
     // Conjugate part ignored
     uint32_t nbPts=(ptCFG->nbFFTbins>>1);
     if (nbPts > 0)
@@ -128,11 +130,16 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
              bar.tLocation.iX = lastPixel;
              bar.tLocation.iY = iHeight-dy+contentRegion.tLocation.iY;
 
+#if 0
              arm_2d_fill_colour_with_opacity(ptTarget, 
                                             &bar, 
                                             (__arm_2d_color_t) {GLCD_COLOR_RED},
                                             170);
-    
+#endif
+             if (dy>0)
+             {
+                 //arm_2d_fill_colour(ptTarget, &bar, GLCD_COLOR_RED);
+             }
 
              lastPixel += deltaPixel;
              pos = pos - (deltaPixel<<17);
@@ -143,6 +150,7 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
     
     arm_2d_op_wait_async(NULL);
 
+    /*
     draw_round_corner_border(   ptTarget, 
                               &contentRegion, 
                                 GLCD_COLOR_BLACK, 
@@ -152,6 +160,7 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
                                 {255,255,255,255});
     
     arm_2d_op_wait_async(NULL);
+    */
 
 }
 
