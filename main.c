@@ -18,7 +18,17 @@
 
 /*============================ INCLUDES ======================================*/
 #include <stdio.h>
+
+#ifdef HOST
 #include "Virtual_TFT_Port.h"
+#else
+#include "pico/stdlib.h"
+#include "pico/time.h"
+#include "hardware/clocks.h"
+
+#include "st7789_lcd.h"
+#endif
+
 #include "arm_2d_helper.h"
 #include "arm_2d_scenes.h"
 #include "arm_2d_disp_adapters.h"
@@ -99,8 +109,7 @@ void before_scene_switching_handler(void *pTarget,
 /*----------------------------------------------------------------------------
   Main function
  *----------------------------------------------------------------------------*/
-
-int app_2d_main_thread (void *argument)
+void init_scenes ()
 {
 #ifdef RTE_Acceleration_Arm_2D_Extra_Benchmark
     arm_2d_run_benchmark();
@@ -116,9 +125,19 @@ int app_2d_main_thread (void *argument)
     arm_2d_scene_player_switch_to_next_scene(&DISP0_ADAPTER);
 #endif
 
+    
+}
+
+#ifdef HOST
+int app_2d_main_thread (void *argument)
+{
+
+
     int px=0;
     int d=2;
     #define Q 2
+
+    init_scenes();
     
     
     while(1) {
@@ -150,7 +169,6 @@ int app_2d_main_thread (void *argument)
     return 0;
 }
 
-
 int main(int argc, char* argv[])
 {
     VT_init();
@@ -175,6 +193,54 @@ int main(int argc, char* argv[])
     VT_deinit();
     return 0;
 }
+#else 
+int main(int argc, char* argv[])
+{
+    stdio_init_all();
+    start_lcd();
+
+    printf("\r\nArm-2D PC Template\r\n");
+
+    arm_irq_safe {
+        arm_2d_init();
+    }
+
+    disp_adapter0_init();
+
+    init_scenes();
+
+
+    int px=0;
+    int d=2;
+    #define Q 2
+
+    while(1) {
+        if (arm_fsm_rt_cpl == disp_adapter0_task()) {
+            px+=d;
+            if (px>=(20<<Q))
+            {
+                px=(20<<Q);
+                d=-d;
+            }
+            if (px<=-(20<<Q))
+            {   
+                px=-(20<<Q);
+                d=-d;
+            }
+            arm2d_scene_cmsis_stream_new_pos(currentScene,px>>Q);
+
+        }
+        else
+        {
+            arm2d_scene_cmsis_stream_new_spectrum(currentScene,fftAmp);
+            arm2d_scene_cmsis_stream_new_amplitude(currentScene,samples);
+        }
+    }
+
+
+    return 0;
+}
+#endif 
 
 #if defined(__clang__)
 #   pragma clang diagnostic pop

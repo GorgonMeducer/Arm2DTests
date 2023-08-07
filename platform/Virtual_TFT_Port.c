@@ -9,6 +9,8 @@
 
 #undef main
 
+#define ZOOM 3
+
 #define monochrome_2_RGB888(color)                (color?0x000000:0xffffff)
 #define GRAY8_2_RGB888(color)                     (((color&0xFF)<<16)+((color&0xFF)<<8)+((color&0xFF)))
 #define RGB565_2_RGB888(color)                    (((color&0xF800)<<8)+((color&0x7E0)<<5)+((color&0x1F)<<3))
@@ -119,7 +121,7 @@ static void monitor_sdl_init(void)
                                 "bits )"
                                 ,
                                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                VT_WIDTH, VT_HEIGHT, 0);       /*last param. SDL_WINDOW_BORDERLESS to hide borders*/
+                                ZOOM*VT_WIDTH, ZOOM*VT_HEIGHT, 0);       /*last param. SDL_WINDOW_BORDERLESS to hide borders*/
 
 #if VT_VIRTUAL_MACHINE
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);

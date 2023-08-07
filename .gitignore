@@ -1,2 +1,4 @@
 build.tmp/
+build_mac.tmp/
+build_pico.tmp/
 .DS_Store
