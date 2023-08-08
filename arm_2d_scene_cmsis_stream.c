@@ -230,11 +230,11 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
             in navigation dirty region.
 
             There must be a much better way.
-            
+
         */
         if (ptTile->tRegion.tLocation.iY<0)
         {
-            return arm_fsm_rt_cpl;
+            //return arm_fsm_rt_cpl;
         }
     
     /*-----------------------draw the foreground begin-----------------------*/
@@ -280,7 +280,7 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
                 bIsNewFrame);
             
           }
-        __item_line_vertical(__GLCD_CFG_SCEEN_WIDTH__,__GLCD_CFG_SCEEN_HEIGHT__>>1) {
+        __item_line_vertical(__GLCD_CFG_SCEEN_WIDTH__,(__GLCD_CFG_SCEEN_HEIGHT__>>1) - 25) {
             amplitude_display_show(&(ptThis->tAmplitude),
                 ptTile,&__item_region,
                 ptThis->amplitude,

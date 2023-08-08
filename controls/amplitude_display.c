@@ -121,31 +121,45 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
 {
     int_fast16_t iWidth = width;
     int_fast16_t iHeight = height;
-
-   /*printf("%d %d %d %d\n",ptTarget->tRegion.tLocation.iX,
-    ptTarget->tRegion.tLocation.iY,
-    ptTarget->tRegion.tSize.iWidth,
-    ptTarget->tRegion.tSize.iHeight);*/
+   
+   /*printf("AMP: %d %d %d %d\n",amplitudeRegion->tLocation.iX,
+    amplitudeRegion->tLocation.iY,
+    amplitudeRegion->tSize.iWidth,
+    amplitudeRegion->tSize.iHeight);*/
 
    arm_2d_region_t tValidRegion;
-   
+   arm_2d_location_t tOffset;
+
    const arm_2d_tile_t *root = arm_2d_tile_get_root( ptTarget,
                                             &tValidRegion, 
-                                            NULL);
+                                            &tOffset);
 
-   
+    
     if (root == NULL)
     {
         return;
     }
     else 
     {
-        /*printf("%d %d %d %d %08X\n",root->tRegion.tLocation.iX,
-    root->tRegion.tLocation.iY,
-    root->tRegion.tSize.iWidth,
-    root->tRegion.tSize.iHeight,
-    root->phwBuffer);*/
-
+        arm_2d_region_t outRegion;
+        tValidRegion.tLocation.iX = tOffset.iX;
+        tValidRegion.tLocation.iY = tOffset.iY;
+        /*printf("VAL: %d %d %d %d\n",
+    tOffset.iX,
+    tOffset.iY,
+    tValidRegion.tSize.iWidth,
+    tValidRegion.tSize.iHeight);
+        printf("AMP: %d %d %d %d\n",
+    amplitudeRegion->tLocation.iX,
+    amplitudeRegion->tLocation.iY,
+    amplitudeRegion->tSize.iWidth,
+    amplitudeRegion->tSize.iHeight);*/
+if (!arm_2d_region_intersect(   &tValidRegion,
+                           amplitudeRegion,
+                            &outRegion))
+{
+    return;
+}
         /* THIS TEST IS NOT UNDERSTOOD 
            WHY DO I HAVE CRASH IN CASE THE REGION
            IS CORRESPONDING TO NAVIGATION LAYER.
@@ -156,6 +170,7 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
            REDRAWING IN THIS CASE
 
         */
+       //if (tOffset.iY > amplitudeRegion->tSize.iHeight)
         if (root->tRegion.tSize.iHeight < 240)
         {
             return;
@@ -197,7 +212,7 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
     arm_2d_location_t tLocation;
     for(int i=1;i<ptCFG->nbAmpValues;i++)
     {
-        // >> 16 because half scale of LCD
+        // >> 1 because half scale of LCD
         q15_t newY = (((q31_t) values[i] * ((iHeight>>1)-1)) >> 15);
         drawLine(dx,dy,root,currentX,currentY,newY);
         //tLocation.iX = currentX>>15;tLocation.iY=dy-newY;
@@ -217,7 +232,7 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
     
     arm_2d_op_wait_async(NULL);
     */
-        
+    
 }
 
 #if defined(__clang__)
