@@ -234,7 +234,7 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
         */
         if (ptTile->tRegion.tLocation.iY<0)
         {
-            //return arm_fsm_rt_cpl;
+            return arm_fsm_rt_cpl;
         }
     
     /*-----------------------draw the foreground begin-----------------------*/
@@ -270,25 +270,28 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
 
             }
         
-        arm_2d_layout(__canvas) {
-        __item_line_vertical(__GLCD_CFG_SCEEN_WIDTH__,__GLCD_CFG_SCEEN_HEIGHT__>>1) {
+        //arm_2d_layout(__canvas) {
+        //__item_line_vertical(__GLCD_CFG_SCEEN_WIDTH__,(__GLCD_CFG_SCEEN_HEIGHT__>>1)-50) {
+        arm_2d_align_top_centre(__canvas,__GLCD_CFG_SCEEN_WIDTH__,(__GLCD_CFG_SCEEN_HEIGHT__>>1)-25) {
             spectrum_display_show(&(ptThis->tSpectrum),
-                ptTile,&__item_region,
+                ptTile,&__top_centre_region/*&__item_region*/,
                 ptThis->fftSpectrum,
-                __item_region.tSize.iWidth - 10,
-                __item_region.tSize.iHeight,
+                __top_centre_region.tSize.iWidth - 10,
+                __top_centre_region.tSize.iHeight,
                 bIsNewFrame);
             
           }
-        __item_line_vertical(__GLCD_CFG_SCEEN_WIDTH__,(__GLCD_CFG_SCEEN_HEIGHT__>>1) - 25) {
+        //__item_line_vertical(__GLCD_CFG_SCEEN_WIDTH__,(__GLCD_CFG_SCEEN_HEIGHT__>>1) - 50) {
+        arm_2d_align_bottom_centre(__canvas,__GLCD_CFG_SCEEN_WIDTH__,(__GLCD_CFG_SCEEN_HEIGHT__>>1)-25) {
+
             amplitude_display_show(&(ptThis->tAmplitude),
-                ptTile,&__item_region,
+                ptTile,&__bottom_centre_region/*&__item_region*/,
                 ptThis->amplitude,
-                __item_region.tSize.iWidth - 10,
-                __item_region.tSize.iHeight,
+                __bottom_centre_region.tSize.iWidth - 10,
+                __bottom_centre_region.tSize.iHeight,
                 bIsNewFrame);
           }
-        }
+        //}
         
 
         /* draw text at the top-left corner */

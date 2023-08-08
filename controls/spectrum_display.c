@@ -98,7 +98,7 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
     contentRegion.tLocation.iY += pad;
 
 
-    /*
+    
     draw_round_corner_box(  ptTarget, 
                                     &contentRegion, 
                                     GLCD_COLOR_OLIVE, 
@@ -106,7 +106,7 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
                                     bIsNewFrame);
 
     arm_2d_op_wait_async(NULL);
-    */
+    
     // Conjugate part ignored
     uint32_t nbPts=(ptCFG->nbFFTbins>>1);
     if (nbPts > 0)
@@ -159,7 +159,7 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
     
     arm_2d_op_wait_async(NULL);
 
-    /*
+    
     draw_round_corner_border(   ptTarget, 
                               &contentRegion, 
                                 GLCD_COLOR_BLACK, 
@@ -169,7 +169,7 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
                                 {255,255,255,255});
     
     arm_2d_op_wait_async(NULL);
-    */
+    
 
 }
 

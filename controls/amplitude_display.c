@@ -192,15 +192,15 @@ if (!arm_2d_region_intersect(   &tValidRegion,
     contentRegion.tLocation.iY += pad;
 
 
-    /*
-    draw_round_corner_box(  ptTarget, 
+    
+    draw_round_corner_box(  root, 
                                     &contentRegion, 
                                     GLCD_COLOR_OLIVE, 
                                     70,
                                     bIsNewFrame);
 
     arm_2d_op_wait_async(NULL);
-    */
+    
 
     uint32_t dx = (uint32_t)(1<<15) * iWidth / ptCFG->nbAmpValues;
     uint32_t dy=contentRegion.tLocation.iY+(iHeight>>1); 
@@ -221,8 +221,8 @@ if (!arm_2d_region_intersect(   &tValidRegion,
         currentY = newY;
     }
 
-    /*
-    draw_round_corner_border(   ptTarget, 
+    
+    draw_round_corner_border(   root, 
                               &contentRegion, 
                                 GLCD_COLOR_BLACK, 
                                 (arm_2d_border_opacity_t)
@@ -231,7 +231,7 @@ if (!arm_2d_region_intersect(   &tValidRegion,
                                 {255,255,255,255});
     
     arm_2d_op_wait_async(NULL);
-    */
+    
     
 }
 
