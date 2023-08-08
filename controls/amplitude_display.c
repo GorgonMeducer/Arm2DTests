@@ -128,18 +128,31 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
    const arm_2d_tile_t *root = arm_2d_tile_get_root( ptTarget,
                                             &tValidRegion, 
                                             NULL);
-    
+
+   
     if (root == NULL)
     {
         return;
     }
     else 
     {
-        printf("%d %d %d %d\n",root->tRegion.tLocation.iX,
+        /*printf("%d %d %d %d %08X\n",root->tRegion.tLocation.iX,
     root->tRegion.tLocation.iY,
     root->tRegion.tSize.iWidth,
-    root->tRegion.tSize.iHeight);
-        if (iHeight < 240)
+    root->tRegion.tSize.iHeight,
+    root->phwBuffer);*/
+
+        /* THIS TEST IS NOT UNDERSTOOD 
+           WHY DO I HAVE CRASH IN CASE THE REGION
+           IS CORRESPONDING TO NAVIGATION LAYER.
+           ANYWAY, I DON'T WANT TO REDRAW THIS CONTROL
+           WHEN IN NAVIGATION LAYER BECAUSE IT IS 
+           CONSUMING TOO MANY CYCLES FOR NOTHING.
+           SO THERE MUST BE A CLEANER WAY TO AVOID
+           REDRAWING IN THIS CASE
+
+        */
+        if (root->tRegion.tSize.iHeight < 240)
         {
             return;
         }
