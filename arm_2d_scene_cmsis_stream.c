@@ -176,8 +176,6 @@ static void __on_scene_cmsis_stream_frame_start(arm_2d_scene_t *ptScene)
         ptThis->speedPos = -ptThis->speedPos;
     }
 
-    ptThis->ptDirtyRegion[0].tRegion.tLocation.iY = ptThis->originDirty+ptThis->oldPos;
-    ptThis->ptDirtyRegion[1].tRegion.tLocation.iY = ptThis->originDirty+ptThis->pos;
     
 }
 
@@ -305,24 +303,7 @@ user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int
     /*! define dirty regions */
     IMPL_ARM_2D_REGION_LIST(s_tDirtyRegions, static)
 
-        /* the dirty region for logo display*/
-        ADD_REGION_TO_LIST(s_tDirtyRegions,
-            0  /* initialize at runtime later */
-        ),
-        ADD_REGION_TO_LIST(s_tDirtyRegions,
-            0  /* initialize at runtime later */
-        ),
-        ADD_REGION_TO_LIST(s_tDirtyRegions,
-            0  /* initialize at runtime later */
-        ),
-        ADD_LAST_REGION_TO_LIST(s_tDirtyRegions,
-            0  /* initialize at runtime later */
-        ),
-
-        /* add the last region:
-         * it is the top left corner for text display
-         */
-        #if 0 
+       
         ADD_LAST_REGION_TO_LIST(s_tDirtyRegions,
             .tLocation = {
                 .iX = 0,
@@ -333,7 +314,6 @@ user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int
                 .iHeight = 240,
             },
         ),
-        #endif
         
 
     END_IMPL_ARM_2D_REGION_LIST(s_tDirtyRegions)
@@ -347,20 +327,8 @@ user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int
     
    
 
-    arm_2d_align_centre(tScreen, c_tilecmsisLOGORGB565.tRegion.tSize) {
-        s_tDirtyRegions[0].tRegion = __centre_region;
-        s_tDirtyRegions[1].tRegion = __centre_region;
-    }
+   
 
-    arm_2d_layout(tScreen) {
-        __item_line_vertical(__GLCD_CFG_SCEEN_WIDTH__,__GLCD_CFG_SCEEN_HEIGHT__>>1) {
-            s_tDirtyRegions[2].tRegion=__item_region;
-
-          }
-        __item_line_vertical(__GLCD_CFG_SCEEN_WIDTH__,__GLCD_CFG_SCEEN_HEIGHT__>>1) {
-            s_tDirtyRegions[3].tRegion=__item_region;
-          }
-        }
     
     if (NULL == ptThis) {
         ptThis = (user_scene_cmsis_stream_t *)malloc(sizeof(user_scene_cmsis_stream_t));

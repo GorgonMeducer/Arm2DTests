@@ -138,7 +138,7 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
 #endif
              if (dy>0)
              {
-                 //arm_2d_fill_colour(ptTarget, &bar, GLCD_COLOR_RED);
+                 arm_2d_fill_colour(ptTarget, &bar, GLCD_COLOR_RED);
              }
 
              lastPixel += deltaPixel;

@@ -66,13 +66,13 @@ static void drawLine(uint32_t dx, uint32_t dy,const arm_2d_tile_t *ptTarget,uint
      {
        tLocation.iX = ax>>15;tLocation.iY=dy-ay;
        //arm_2d_rgb565_draw_point(ptTarget,tLocation,COLOR);
-                   printf("%d %d\n",tLocation.iX,tLocation.iY);
+                   //printf("%d %d\n",tLocation.iX,tLocation.iY);
 
        arm_2d_rgb16_draw_point_fast(ptTarget,tLocation,COLOR);
        uint32_t n=ax+dx;
        tLocation.iX = n>>15;tLocation.iY=dy-by;
        //arm_2d_rgb565_draw_point(ptTarget,tLocation,COLOR);
-                  printf("%d %d\n",tLocation.iX,tLocation.iY);
+                  //printf("%d %d\n",tLocation.iX,tLocation.iY);
 
        arm_2d_rgb16_draw_point_fast(ptTarget,tLocation,COLOR);
      }
@@ -99,7 +99,7 @@ static void drawLine(uint32_t dx, uint32_t dy,const arm_2d_tile_t *ptTarget,uint
         for(int i=start;i<end;i++)
         {
             tLocation.iX = x>>15;tLocation.iY=dy-i;
-            printf("%d %d\n",tLocation.iX,tLocation.iY);
+            //printf("%d %d\n",tLocation.iX,tLocation.iY);
             //arm_2d_rgb565_draw_point(ptTarget,tLocation,COLOR);
             arm_2d_rgb16_draw_point_fast(ptTarget,tLocation,COLOR);
 
@@ -122,12 +122,30 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
     int_fast16_t iWidth = width;
     int_fast16_t iHeight = height;
 
-   arm_2d_region_t ptValidRegion;
-   arm_2d_location_t ptOffset;
-   const arm_2d_tile_t *root = arm_2d_tile_get_root( ptTarget,
-                                            &ptValidRegion,
-                                            &ptOffset);
    
+   arm_2d_region_t tValidRegion;
+   
+   const arm_2d_tile_t *root = arm_2d_tile_get_root( ptTarget,
+                                            &tValidRegion, 
+                                            NULL);
+    
+    if (root == NULL)
+    {
+        return;
+    }
+    else 
+    {
+        printf("%d %d %d %d\n",root->tRegion.tLocation.iX,
+    root->tRegion.tLocation.iY,
+    root->tRegion.tSize.iWidth,
+    root->tRegion.tSize.iHeight);
+        if (iHeight < 240)
+        {
+            return;
+        }
+    }
+   //const arm_2d_tile_t *root = ptTarget;
+
     arm_2d_region_t contentRegion = *amplitudeRegion;
 
     iWidth -= 2*PADX;
@@ -164,7 +182,7 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
     {
         // >> 16 because half scale of LCD
         q15_t newY = (((q31_t) values[i] * ((iHeight>>1)-1)) >> 15);
-        //drawLine(dx,dy,root,currentX,currentY,newY);
+        drawLine(dx,dy,root,currentX,currentY,newY);
         //tLocation.iX = currentX>>15;tLocation.iY=dy-newY;
         //arm_2d_rgb565_draw_point(ptTarget,tLocation,GLCD_COLOR_RED);
         currentX = currentX+dx;

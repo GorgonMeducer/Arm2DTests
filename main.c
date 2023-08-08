@@ -203,6 +203,7 @@ int main(int argc, char* argv[])
 
     disp_adapter0_init();
 
+
     SDL_CreateThread(app_2d_main_thread, "arm-2d thread", NULL);
 
     while (1) {
