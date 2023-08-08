@@ -219,8 +219,24 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
     user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)pTarget;
     ARM_2D_UNUSED(ptTile);
     ARM_2D_UNUSED(bIsNewFrame);
+
+
     
     arm_2d_canvas(ptTile, __canvas) {
+
+        /*
+
+            Very very dirty test to avoid redrawing when 
+            in navigation dirty region.
+
+            There must be a much better way.
+            
+        */
+        if (ptTile->tRegion.tLocation.iY<0)
+        {
+            return arm_fsm_rt_cpl;
+        }
+    
     /*-----------------------draw the foreground begin-----------------------*/
         
         /* following code is just a demo, you can remove them */

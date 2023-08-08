@@ -122,7 +122,11 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
     int_fast16_t iWidth = width;
     int_fast16_t iHeight = height;
 
-   
+   /*printf("%d %d %d %d\n",ptTarget->tRegion.tLocation.iX,
+    ptTarget->tRegion.tLocation.iY,
+    ptTarget->tRegion.tSize.iWidth,
+    ptTarget->tRegion.tSize.iHeight);*/
+
    arm_2d_region_t tValidRegion;
    
    const arm_2d_tile_t *root = arm_2d_tile_get_root( ptTarget,

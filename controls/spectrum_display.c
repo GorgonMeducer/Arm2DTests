@@ -74,6 +74,15 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
 {
     int_fast16_t iWidth = width;
     int_fast16_t iHeight = height;
+
+    /* DIRTY TEST TO AVOID
+    REDRAWING WHEN IN NAVIGATION DIRTY REGION
+
+    */
+    if (ptTarget->tRegion.tLocation.iY<0)
+    {
+        return;
+    }
    
     arm_2d_region_t contentRegion = *spectrumRegion;
 
