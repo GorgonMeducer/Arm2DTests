@@ -30,8 +30,7 @@ add_compile_options(
     -std=gnu11 -g
     -ffunction-sections 
     -fdata-sections
-    -Ofast
-    -flto)
+    -Ofast)
 else()
     add_compile_options(-Wall)
 endif()
@@ -48,7 +47,9 @@ add_executable(arm2d_demo  main.c
 if (HOST)
     target_sources(arm2d_demo PUBLIC platform/Virtual_TFT_Port.c     
         platform/arm_2d_disp_adapter_0.c)
+    if (UNIX AND APPLE)
     target_compile_definitions(arm2d_demo PRIVATE _THREAD_SAFE SDL_DISABLE_ARM_NEON_H)
+    endif()
     target_include_directories(arm2d_demo PUBLIC . templates controls)
     add_subdirectory(${CMSISDSP}/Source bin_dsp)
 
@@ -88,12 +89,18 @@ target_include_directories(ARM2D PUBLIC platform)
 target_link_libraries(ARM2D PUBLIC CMSISDSP)
 target_link_libraries(arm2d_demo PUBLIC ARM2D)
 
-set(SDL2_INCLUDE_DIR /opt/homebrew/include)
-set(SDL2_LIBRARY /opt/homebrew/lib)
+#set(SDL2_INCLUDE_DIR /opt/homebrew/include)
+#set(SDL2_LIBRARY /opt/homebrew/lib)
 
 target_include_directories(arm2d_demo PUBLIC ${SDL2_INCLUDE_DIR})
 target_link_directories(arm2d_demo PUBLIC ${SDL2_LIBRARY})
 target_link_libraries(arm2d_demo PUBLIC SDL2)
+
+if ((WIN32) OR (UNIX AND APPLE))
+    target_link_libraries(arm2d_demo PUBLIC SDL2main SDL2)
+else()
+target_link_libraries(arm2d_demo PUBLIC SDL2)
+endif()
 else()
 
     target_link_libraries(arm2d_demo 
