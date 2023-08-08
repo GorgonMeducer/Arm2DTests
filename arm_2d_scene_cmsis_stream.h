@@ -26,7 +26,7 @@
 #include "arm_2d_helper_scene.h"
 #include "arm_2d_helper.h"
 #include "spectrum_display.h"
-#include "amplitude_display.h"
+#include "amplitude_display2.h"
 
 #ifdef   __cplusplus
 extern "C" {
@@ -84,7 +84,7 @@ ARM_PRIVATE(
 
     bool bUserAllocated;
     spectrum_display_t tSpectrum;
-    amplitude_display_t tAmplitude;
+    amplitude_display2_t tAmplitude;
     int pos;
     int oldPos;
     int originDirty;

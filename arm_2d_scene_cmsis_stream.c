@@ -91,8 +91,8 @@
 
 extern const arm_2d_tile_t c_tilecmsisLOGORGB565;
 
-//extern const arm_2d_tile_t c_tileCMSISLogo;
-//extern const arm_2d_tile_t c_tileCMSISLogoMask;
+extern const arm_2d_tile_t c_tileCMSISLogo;
+extern const arm_2d_tile_t c_tileCMSISLogoMask;
 //extern const arm_2d_tile_t c_tileCMSISLogoA2Mask;
 //extern const arm_2d_tile_t c_tileCMSISLogoA4Mask;
 /*============================ PROTOTYPES ====================================*/
@@ -175,8 +175,6 @@ static void __on_scene_cmsis_stream_frame_start(arm_2d_scene_t *ptScene)
         ptThis->pos = -MAXPOS;
         ptThis->speedPos = -ptThis->speedPos;
     }
-
-    
 }
 
 static void __on_scene_cmsis_stream_frame_complete(arm_2d_scene_t *ptScene)
@@ -223,19 +221,6 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
 
     
     arm_2d_canvas(ptTile, __canvas) {
-
-        /*
-
-            Very very dirty test to avoid redrawing when 
-            in navigation dirty region.
-
-            There must be a much better way.
-
-        */
-        if (ptTile->tRegion.tLocation.iY<0)
-        {
-            return arm_fsm_rt_cpl;
-        }
     
     /*-----------------------draw the foreground begin-----------------------*/
         
@@ -251,47 +236,46 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
             arm_2d_region_t logo;
 
             logo = __centre_region;
-            logo.tLocation.iY = logo.tLocation.iY + ptThis->pos;
-
-            /*arm_2d_tile_copy_with_src_mask(&c_tileCMSISLogo,
-                                           &c_tileCMSISLogoMask,
-                                           ptTile,
-                                           &logo,
-                                           ARM_2D_CP_MODE_COPY);*/
-
-
-            arm_2d_tile_copy(&c_tilecmsisLOGORGB565,
-                             ptTile,
-                             &logo,
-                             ARM_2D_CP_MODE_COPY);
+            logo.tLocation.iY += ptThis->pos;
+            /*
+            arm_2d_tile_copy_with_src_mask_only(&c_tileCMSISLogo,
+                                                &c_tileCMSISLogoMask,
+                                                ptTile,
+                                                &logo);
+            */
+            
+            arm_2d_tile_copy_only(&c_tilecmsisLOGORGB565,
+                                    ptTile,
+                                    &logo);
+            
             arm_2d_op_wait_async(NULL);
             
-            
-
             }
         
-        //arm_2d_layout(__canvas) {
-        //__item_line_vertical(__GLCD_CFG_SCEEN_WIDTH__,(__GLCD_CFG_SCEEN_HEIGHT__>>1)-50) {
-        arm_2d_align_top_centre(__canvas,__GLCD_CFG_SCEEN_WIDTH__,(__GLCD_CFG_SCEEN_HEIGHT__>>1)-25) {
-            spectrum_display_show(&(ptThis->tSpectrum),
-                ptTile,&__top_centre_region/*&__item_region*/,
-                ptThis->fftSpectrum,
-                __top_centre_region.tSize.iWidth - 10,
-                __top_centre_region.tSize.iHeight,
-                bIsNewFrame);
-            
-          }
-        //__item_line_vertical(__GLCD_CFG_SCEEN_WIDTH__,(__GLCD_CFG_SCEEN_HEIGHT__>>1) - 50) {
-        arm_2d_align_bottom_centre(__canvas,__GLCD_CFG_SCEEN_WIDTH__,(__GLCD_CFG_SCEEN_HEIGHT__>>1)-25) {
+        arm_2d_layout(__canvas) {
+            __item_line_vertical(   ptTile->tRegion.tSize.iWidth,
+                                (ptTile->tRegion.tSize.iHeight >> 1)) {
+                spectrum_display_show(&(ptThis->tSpectrum),
+                    ptTile,
+                    &__item_region,
+                    ptThis->fftSpectrum,
+                    __item_region.tSize.iWidth - 10,
+                    __item_region.tSize.iHeight,
+                    bIsNewFrame);
+                
+            }
 
-            amplitude_display_show(&(ptThis->tAmplitude),
-                ptTile,&__bottom_centre_region/*&__item_region*/,
-                ptThis->amplitude,
-                __bottom_centre_region.tSize.iWidth - 10,
-                __bottom_centre_region.tSize.iHeight,
-                bIsNewFrame);
-          }
-        //}
+            __item_line_vertical(   ptTile->tRegion.tSize.iWidth,
+                                (ptTile->tRegion.tSize.iHeight >> 1)) {
+
+                amplitude_display2_show(&this.tAmplitude,
+                                        ptTile,
+                                        &__item_region,
+                                        ptThis->amplitude,
+                                        GLCD_COLOR_BLUE,
+                                        bIsNewFrame);
+            }
+        }
         
 
         /* draw text at the top-left corner */
@@ -344,10 +328,6 @@ user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int
         = arm_2d_helper_pfb_get_display_area(
             &ptDispAdapter->use_as__arm_2d_helper_pfb_t);
     
-   
-
-   
-
     
     if (NULL == ptThis) {
         ptThis = (user_scene_cmsis_stream_t *)malloc(sizeof(user_scene_cmsis_stream_t));
@@ -370,7 +350,7 @@ user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int
              */
             //.fnBackground   = &__pfb_draw_scene_cmsis_stream_background_handler,
             .fnScene        = &__pfb_draw_scene_cmsis_stream_handler,
-            .ptDirtyRegion  = (arm_2d_region_list_item_t *)s_tDirtyRegions,
+            //.ptDirtyRegion  = (arm_2d_region_list_item_t *)s_tDirtyRegions,
             
 
             //.fnOnBGStart    = &__on_scene_cmsis_stream_background_start,
@@ -385,12 +365,25 @@ user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int
 
     ptThis->fftSpectrum = NULL;
     spectrum_display_init(&(ptThis->tSpectrum),nbFFTBins);
-    amplitude_display_init(&(ptThis->tAmplitude),nbAmps);
+
+    do {
+        impl_fb(AmpBar, 240 - 24, 120 - 16, uint8_t,
+            .tInfo.bHasEnforcedColour = true,
+            .tInfo.tColourInfo.chScheme = ARM_2D_COLOUR_8BIT,
+        );
+
+        amplitude_display2_cfg_t tCFG = {
+            .hwAmpValues = nbAmps,
+            .chPadX = 4,
+            .chPadY = 4,
+            .tileBar = AmpBar,
+        };
+        amplitude_display2_init(&(this.tAmplitude),&tCFG);
+
+    } while(0);
     ptThis->pos=0;
     ptThis->oldPos=0;
     ptThis->originDirty = s_tDirtyRegions[0].tRegion.tLocation.iY;
-
-
 
     arm_2d_scene_player_append_scenes(  ptDispAdapter, 
                                         &this.use_as__arm_2d_scene_t, 
