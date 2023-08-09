@@ -25,8 +25,8 @@
 
 #include "arm_2d_helper_scene.h"
 #include "arm_2d_helper.h"
-#include "spectrum_display.h"
-#include "amplitude_display2.h"
+//#include "spectrum_display.h"
+//#include "amplitude_display.h"
 
 #ifdef   __cplusplus
 extern "C" {
@@ -66,8 +66,8 @@ extern "C" {
  *            by user.
  * \return user_scene_meter_t* the user_scene_meter_t instance
  */
-#define arm_2d_scene_cmsis_stream_init(_NBFFT,_NBAMP,__DISP_ADAPTER_PTR, ...)                    \
-            __arm_2d_scene_cmsis_stream_init((_NBFFT),(_NBAMP),(__DISP_ADAPTER_PTR), (NULL, ##__VA_ARGS__))
+#define arm_2d_scene_cmsis_stream_init(__DISP_ADAPTER_PTR, ...)                    \
+            __arm_2d_scene_cmsis_stream_init((__DISP_ADAPTER_PTR), (NULL, ##__VA_ARGS__))
 
 /*============================ TYPES =========================================*/
 /*!
@@ -83,34 +83,39 @@ ARM_PRIVATE(
     int64_t lTimestamp[2];
 
     bool bUserAllocated;
-    spectrum_display_t tSpectrum;
-    amplitude_display2_t tAmplitude;
+    //spectrum_display_t tSpectrum;
+    //amplitude_display_t tAmplitude;
     int pos;
     int oldPos;
-    int originDirty;
     int speedPos;
+    arm_2d_tile_t **list_of_tiles;
+    int nb_tiles;
     
 )
     /* place your public member here */
-    const q15_t *fftSpectrum;
-    const q15_t *amplitude;
+    //const q15_t *fftSpectrum;
+    //const q15_t *amplitude;
 };
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 
-extern void arm2d_scene_cmsis_stream_new_spectrum(user_scene_cmsis_stream_t *ptScene,
-    const q15_t *fftSpectrum);
+//extern void arm2d_scene_cmsis_stream_new_spectrum(user_scene_cmsis_stream_t *ptScene,
+//    const q15_t *fftSpectrum);
 
-extern void arm2d_scene_cmsis_stream_new_amplitude(user_scene_cmsis_stream_t *ptScene,
-    const q15_t *amplitude);
+//extern void arm2d_scene_cmsis_stream_new_amplitude(user_scene_cmsis_stream_t *ptScene,
+//    const q15_t *amplitude);
 
 extern void arm2d_scene_cmsis_stream_new_speed(user_scene_cmsis_stream_t *ptScene,
     const int speed);
 
-ARM_NONNULL(3)
+extern void arm2d_scene_cmsis_stream_new_tiles(user_scene_cmsis_stream_t *ptScene,
+ arm_2d_tile_t **tiles,
+ const int nb_tiles);
+
+ARM_NONNULL(1)
 extern
-user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init( int nbFFTBins,  int nbAmplitudes,arm_2d_scene_player_t *ptDispAdapter, 
+user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(arm_2d_scene_player_t *ptDispAdapter, 
                                         user_scene_cmsis_stream_t *ptScene);
 
 #if defined(__clang__)

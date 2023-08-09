@@ -17,14 +17,13 @@
  */
 
 /*============================ INCLUDES ======================================*/
+#define __amplitude_display_IMPLEMENT__
+
 #include "./arm_extra_controls.h"
-#include "./__common.h"
 #include "arm_2d_helper.h"
-#include "arm_2d.h"
 #include "amplitude_display.h"
-
-
 #include <assert.h>
+#include <string.h>
 
 #if defined(__clang__)
 #   pragma clang diagnostic push
@@ -44,196 +43,168 @@
 #endif
 
 /*============================ MACROS ========================================*/
+
+#if __GLCD_CFG_COLOUR_DEPTH__ == 8
+#define arm_2d_draw_point_fast    arm_2d_c8bit_draw_point_fast
+
+#elif __GLCD_CFG_COLOUR_DEPTH__ == 16
+#define arm_2d_draw_point_fast    arm_2d_rgb16_draw_point_fast
+
+#elif __GLCD_CFG_COLOUR_DEPTH__ == 32
+#define arm_2d_draw_point_fast    arm_2d_rgb32_draw_point_fast
+
+#else
+#   error Unsupported colour depth!
+#endif
+
+#undef this
+#define this    (*ptThis)
+
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
+static void __draw_line(uint32_t dx, 
+                        uint32_t dy,
+                        const arm_2d_tile_t *ptTarget,
+                        uint32_t ax,
+                        q15_t ay,
+                        q15_t by);
+
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-
-void amplitude_display_init(amplitude_display_t *ptCFG,int nbAmpValues)
+ARM_NONNULL(1)
+void amplitude_display_init(amplitude_display_t *ptThis, amplitude_display_cfg_t *ptCFG)
 {
-   ptCFG->nbAmpValues = nbAmpValues;
-
+    assert(NULL!= ptThis);
+    memset(ptThis, 0, sizeof(amplitude_display_t));
+    this.tCFG = *ptCFG;
 }
-#include <stdio.h>
-#define COLOR GLCD_COLOR_BLUE
-static void drawLine(uint32_t dx, uint32_t dy,const arm_2d_tile_t *ptTarget,uint32_t ax,q15_t ay,q15_t by)
+
+ARM_NONNULL(1)
+void amplitude_display_depose( amplitude_display_t *ptThis)
+{
+    assert(NULL != ptThis);
+    
+}
+
+ARM_NONNULL(1)
+void amplitude_display_show( amplitude_display_t *ptThis,
+                            const arm_2d_tile_t *ptTile, 
+                            const arm_2d_region_t *ptRegion,
+                            const q15_t *values,
+                            COLOUR_INT tColour,
+                            bool bIsNewFrame)
+{
+    assert(NULL!= ptThis);
+
+    
+    if (bIsNewFrame) {
+        /* clear bar buffer */
+        memset(this.tCFG.tileBar.pchBuffer, 0, get_tile_buffer_size(this.tCFG.tileBar, uint8_t));
+
+        arm_2d_size_t tBarSize = this.tCFG.tileBar.tRegion.tSize;
+
+        int16_t iWidth = tBarSize.iWidth;
+        int16_t iHeight = tBarSize.iHeight;
+        uint32_t dx = (uint32_t)(1<<15) * iWidth / this.tCFG.hwAmpValues;
+        uint32_t dy= iHeight >> 1; 
+
+        uint32_t currentX= 0;
+        q15_t currentY=0;
+        currentY = (((q31_t) values[0] * ((iHeight>>1)-1)) >> 15);
+
+        /* draw bar buffer */
+        for(int i=1;i<this.tCFG.hwAmpValues;i++) {
+            q15_t newY = (((q31_t) values[i] * ((iHeight>>1)-1)) >> 15);
+            __draw_line(dx,dy,&this.tCFG.tileBar,currentX,currentY,newY);
+
+            currentX = currentX+dx;
+            currentY = newY;
+        }
+    }
+
+    arm_2d_container(ptTile, __control, ptRegion) {
+        /* put your drawing code inside here
+         *    - &__control is the target tile (please do not use ptTile anymore)
+         *    - __control_canvas is the canvas
+         */
+
+        arm_2d_align_centre(__control_canvas, this.tCFG.tileBar.tRegion.tSize) {
+
+            draw_round_corner_box(
+                                &__control, 
+                                &__centre_region, 
+                                GLCD_COLOR_OLIVE, 
+                                70,
+                                bIsNewFrame);
+            
+
+            arm_2d_fill_colour_with_mask(
+                &__control,
+                &__centre_region,
+                &this.tCFG.tileBar,
+                (__arm_2d_color_t) {tColour}
+            );
+
+            /* make sure the operation is complete */
+            arm_2d_op_wait_async(NULL);
+        }
+
+        
+    }
+
+    arm_2d_op_wait_async(NULL);
+}
+
+
+static void __draw_line(uint32_t dx, 
+                        uint32_t dy,
+                        const arm_2d_tile_t *ptTarget,
+                        uint32_t ax,
+                        q15_t ay,
+                        q15_t by)
 {
      arm_2d_location_t tLocation;
 
-     if (abs(by-ay)<=1)
-     {
+     if (abs(by-ay)<=1) {
        tLocation.iX = ax>>15;tLocation.iY=dy-ay;
        //arm_2d_rgb565_draw_point(ptTarget,tLocation,COLOR);
                    //printf("%d %d\n",tLocation.iX,tLocation.iY);
 
-       arm_2d_rgb16_draw_point_fast(ptTarget,tLocation,COLOR);
+       arm_2d_c8bit_draw_point_fast(ptTarget,tLocation,255);
        uint32_t n=ax+dx;
        tLocation.iX = n>>15;tLocation.iY=dy-by;
        //arm_2d_rgb565_draw_point(ptTarget,tLocation,COLOR);
                   //printf("%d %d\n",tLocation.iX,tLocation.iY);
 
-       arm_2d_rgb16_draw_point_fast(ptTarget,tLocation,COLOR);
-     }
-     else
-     {
+       arm_2d_c8bit_draw_point_fast(ptTarget,tLocation,255);
+     } else {
         int32_t refdelta = dx / (abs(by-ay)+1);
         int32_t delta;
         uint32_t x = ax;
         int start;
         int end;
-        if (ay<by)
-        {
+        if (ay<by) {
             start = ay;
             end = by;
             delta=refdelta;
-        }
-        else
-        {
+        } else {
             start = by;
             end = ay;
             x = ax + dx;
             delta=-refdelta;
         }
-        for(int i=start;i<end;i++)
-        {
+        for(int i=start;i<end;i++) {
             tLocation.iX = x>>15;tLocation.iY=dy-i;
             //printf("%d %d\n",tLocation.iX,tLocation.iY);
             //arm_2d_rgb565_draw_point(ptTarget,tLocation,COLOR);
-            arm_2d_rgb16_draw_point_fast(ptTarget,tLocation,COLOR);
+            arm_2d_c8bit_draw_point_fast(ptTarget,tLocation,255);
 
             x+=delta;
         }
      }
-}
-
-#include <stdio.h>
-#define PADX 4
-#define PADY 4
-void amplitude_display_show(amplitude_display_t *ptCFG,
-    const arm_2d_tile_t *ptTarget, 
-    arm_2d_region_t *amplitudeRegion,
-    const q15_t *values,
-    int width,
-    int height,
-    int bIsNewFrame)
-{
-    int_fast16_t iWidth = width;
-    int_fast16_t iHeight = height;
-   
-   /*printf("AMP: %d %d %d %d\n",amplitudeRegion->tLocation.iX,
-    amplitudeRegion->tLocation.iY,
-    amplitudeRegion->tSize.iWidth,
-    amplitudeRegion->tSize.iHeight);*/
-
-   arm_2d_region_t tValidRegion;
-   arm_2d_location_t tOffset;
-
-   const arm_2d_tile_t *root = arm_2d_tile_get_root( ptTarget,
-                                            &tValidRegion, 
-                                            &tOffset);
-
-    
-    if (root == NULL)
-    {
-        return;
-    }
-    else 
-    {
-        arm_2d_region_t outRegion;
-        tValidRegion.tLocation.iX = tOffset.iX;
-        tValidRegion.tLocation.iY = tOffset.iY;
-        /*printf("VAL: %d %d %d %d\n",
-    tOffset.iX,
-    tOffset.iY,
-    tValidRegion.tSize.iWidth,
-    tValidRegion.tSize.iHeight);
-        printf("AMP: %d %d %d %d\n",
-    amplitudeRegion->tLocation.iX,
-    amplitudeRegion->tLocation.iY,
-    amplitudeRegion->tSize.iWidth,
-    amplitudeRegion->tSize.iHeight);*/
-if (!arm_2d_region_intersect(   &tValidRegion,
-                           amplitudeRegion,
-                            &outRegion))
-{
-    return;
-}
-        /* THIS TEST IS NOT UNDERSTOOD 
-           WHY DO I HAVE CRASH IN CASE THE REGION
-           IS CORRESPONDING TO NAVIGATION LAYER.
-           ANYWAY, I DON'T WANT TO REDRAW THIS CONTROL
-           WHEN IN NAVIGATION LAYER BECAUSE IT IS 
-           CONSUMING TOO MANY CYCLES FOR NOTHING.
-           SO THERE MUST BE A CLEANER WAY TO AVOID
-           REDRAWING IN THIS CASE
-
-        */
-       //if (tOffset.iY > amplitudeRegion->tSize.iHeight)
-        if (root->tRegion.tSize.iHeight < 240)
-        {
-            return;
-        }
-    }
-   //const arm_2d_tile_t *root = ptTarget;
-
-    arm_2d_region_t contentRegion = *amplitudeRegion;
-
-    iWidth -= 2*PADX;
-    iHeight -= 2*PADY;
-    contentRegion.tSize.iWidth = iWidth;
-    contentRegion.tSize.iHeight = iHeight;
-
-    int_fast16_t pad = (amplitudeRegion->tSize.iWidth - iWidth)>>1;
-    contentRegion.tLocation.iX += pad;
-
-    pad = (amplitudeRegion->tSize.iHeight - iHeight)>>1;
-    contentRegion.tLocation.iY += pad;
-
-
-    
-    draw_round_corner_box(  root, 
-                                    &contentRegion, 
-                                    GLCD_COLOR_OLIVE, 
-                                    70,
-                                    bIsNewFrame);
-
-    arm_2d_op_wait_async(NULL);
-    
-
-    uint32_t dx = (uint32_t)(1<<15) * iWidth / ptCFG->nbAmpValues;
-    uint32_t dy=contentRegion.tLocation.iY+(iHeight>>1); 
-
-    uint32_t currentX=contentRegion.tLocation.iX<<15;
-    q15_t currentY=0;
-    currentY = (((q31_t) values[0] * ((iHeight>>1)-1)) >> 15);
-
-    arm_2d_location_t tLocation;
-    for(int i=1;i<ptCFG->nbAmpValues;i++)
-    {
-        // >> 1 because half scale of LCD
-        q15_t newY = (((q31_t) values[i] * ((iHeight>>1)-1)) >> 15);
-        drawLine(dx,dy,root,currentX,currentY,newY);
-        //tLocation.iX = currentX>>15;tLocation.iY=dy-newY;
-        //arm_2d_rgb565_draw_point(ptTarget,tLocation,GLCD_COLOR_RED);
-        currentX = currentX+dx;
-        currentY = newY;
-    }
-
-    
-    draw_round_corner_border(   root, 
-                              &contentRegion, 
-                                GLCD_COLOR_BLACK, 
-                                (arm_2d_border_opacity_t)
-                                {255,255,255,255},
-                                (arm_2d_corner_opacity_t)
-                                {255,255,255,255});
-    
-    arm_2d_op_wait_async(NULL);
-    
-    
 }
 
 #if defined(__clang__)

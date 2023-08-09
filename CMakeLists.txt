@@ -27,7 +27,7 @@ endif()
 
 if (HOST)
 add_compile_options(
-    -std=gnu11 -g
+    -g
     -ffunction-sections 
     -fdata-sections
     -Ofast)
@@ -40,12 +40,15 @@ add_link_options(-flto)
 add_executable(arm2d_demo  main.c
         arm_2d_scene_cmsis_stream.c
         controls/spectrum_display.c 
-        controls/amplitude_display2.c  
+        controls/amplitude_display.c  
+        controls/draw_amplitude.c  
         cmsis_logo.c
+        test.cpp
+        scheduler.cpp
 )
 
 # Check weak reference is replaced by strong one
-target_link_options(arm2d_demo PUBLIC -Wl,-trace-symbol=__arm_2d_impl_rgb565_colour_filling_mask)
+#target_link_options(arm2d_demo PUBLIC -Wl,-trace-symbol=__arm_2d_impl_rgb565_colour_filling_mask)
 
 if (HOST)
     target_sources(arm2d_demo PUBLIC platform/Virtual_TFT_Port.c     

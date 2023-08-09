@@ -65,24 +65,7 @@
  * 
  */
 
-#if __GLCD_CFG_COLOUR_DEPTH__ == 8
-
-#   define c_tileCMSISLogo          c_tileCMSISLogoGRAY8
-
-#elif __GLCD_CFG_COLOUR_DEPTH__ == 16
-
-#   define c_tileCMSISLogo          c_tileCMSISLogoRGB565
-
-#elif __GLCD_CFG_COLOUR_DEPTH__ == 32
-
-#   define c_tileCMSISLogo          c_tileCMSISLogoCCCA8888
-#else
-#   error Unsupported colour depth!
-#endif
-
-
-
-/*============================ MACROFIED FUNCTIONS ===========================*/
+/*======================= MACROFIED FUNCTIONS ===========================*/
 #undef this
 #define this (*ptThis)
 
@@ -91,33 +74,26 @@
 
 extern const arm_2d_tile_t c_tilecmsisLOGORGB565;
 
-extern const arm_2d_tile_t c_tileCMSISLogo;
-extern const arm_2d_tile_t c_tileCMSISLogoMask;
-//extern const arm_2d_tile_t c_tileCMSISLogoA2Mask;
-//extern const arm_2d_tile_t c_tileCMSISLogoA4Mask;
+
 /*============================ PROTOTYPES ====================================*/
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ IMPLEMENTATION ================================*/
 
-void arm2d_scene_cmsis_stream_new_spectrum(user_scene_cmsis_stream_t *ptScene,
-    const q15_t *fftSpectrum)
-{
-    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
-    ptThis->fftSpectrum = fftSpectrum;
-}
-
-void arm2d_scene_cmsis_stream_new_amplitude(user_scene_cmsis_stream_t *ptScene,
-    const q15_t *amplitude)
-{
-    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
-    ptThis->amplitude = amplitude;
-}
 
 void arm2d_scene_cmsis_stream_new_speed(user_scene_cmsis_stream_t *ptScene,
     const int speed)
 {
     user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
     ptThis->speedPos = speed;
+}
+
+void arm2d_scene_cmsis_stream_new_tiles(user_scene_cmsis_stream_t *ptScene,
+ arm_2d_tile_t **tiles,
+ const int nb_tiles)
+{
+    user_scene_cmsis_stream_t *ptThis = (user_scene_cmsis_stream_t *)ptScene;
+    ptThis->nb_tiles = nb_tiles;
+    ptThis->list_of_tiles = tiles;
 }
 
 static void __on_scene_cmsis_stream_depose(arm_2d_scene_t *ptScene)
@@ -211,6 +187,8 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_background_handler)
     return arm_fsm_rt_cpl;
 }
 
+#include <stdio.h>
+
 static
 IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
 {
@@ -255,25 +233,50 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
         arm_2d_layout(__canvas) {
             __item_line_vertical(   ptTile->tRegion.tSize.iWidth,
                                 (ptTile->tRegion.tSize.iHeight >> 1)) {
-                spectrum_display_show(&(ptThis->tSpectrum),
+                /*spectrum_display_show(&(ptThis->tSpectrum),
                     ptTile,
                     &__item_region,
                     ptThis->fftSpectrum,
                     __item_region.tSize.iWidth - 10,
                     __item_region.tSize.iHeight,
-                    bIsNewFrame);
+                    bIsNewFrame);*/
                 
             }
 
             __item_line_vertical(   ptTile->tRegion.tSize.iWidth,
                                 (ptTile->tRegion.tSize.iHeight >> 1)) {
 
-                amplitude_display2_show(&this.tAmplitude,
+                /*amplitude_display_show(&this.tAmplitude,
                                         ptTile,
                                         &__item_region,
                                         ptThis->amplitude,
                                         GLCD_COLOR_BLUE,
-                                        bIsNewFrame);
+                                        bIsNewFrame);*/
+                if (ptThis->nb_tiles>=1)
+                {
+                    //printf("Scene %016llX\n",(uint64_t)(ptThis->list_of_tiles[0]->pchBuffer));
+
+                   arm_2d_container(ptTile, __control, &__item_region) {
+
+                        arm_2d_align_centre(__control_canvas, 240 - 24,120-16) {
+
+                            /*arm_2d_tile_copy_only(ptThis->list_of_tiles[0],
+                                    ptTile,
+                                    &__centre_region);*/
+                            
+                            arm_2d_tile_copy_with_colour_keying_and_opacity(
+                    ptThis->list_of_tiles[0],
+                    ptTile,
+                    &__centre_region,
+                    200,
+                    (__arm_2d_color_t){GLCD_COLOR_OLIVE}
+                    );
+                    
+                       }
+                    }
+                   
+
+                }
             }
         }
         
@@ -296,8 +299,8 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
 }
 
 #include <stdio.h>
-ARM_NONNULL(3)
-user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int nbAmps,arm_2d_scene_player_t *ptDispAdapter, 
+ARM_NONNULL(1)
+user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(arm_2d_scene_player_t *ptDispAdapter, 
                                         user_scene_cmsis_stream_t *ptThis)
 {
     bool bUserAllocated = false;
@@ -363,27 +366,32 @@ user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int
         .bUserAllocated = bUserAllocated,
     };
 
-    ptThis->fftSpectrum = NULL;
-    spectrum_display_init(&(ptThis->tSpectrum),nbFFTBins);
+    //ptThis->fftSpectrum = NULL;
+    //spectrum_display_init(&(ptThis->tSpectrum),nbFFTBins);
 
+    #if 0
     do {
         impl_fb(AmpBar, 240 - 24, 120 - 16, uint8_t,
             .tInfo.bHasEnforcedColour = true,
             .tInfo.tColourInfo.chScheme = ARM_2D_COLOUR_8BIT,
         );
 
-        amplitude_display2_cfg_t tCFG = {
+        amplitude_display_cfg_t tCFG = {
             .hwAmpValues = nbAmps,
             .chPadX = 4,
             .chPadY = 4,
             .tileBar = AmpBar,
         };
-        amplitude_display2_init(&(this.tAmplitude),&tCFG);
+        //amplitude_display_init(&(this.tAmplitude),&tCFG);
 
     } while(0);
+    #endif 
+
     ptThis->pos=0;
     ptThis->oldPos=0;
-    ptThis->originDirty = s_tDirtyRegions[0].tRegion.tLocation.iY;
+    ptThis->nb_tiles=0;
+    ptThis->speedPos=2;
+    ptThis->list_of_tiles=NULL;
 
     arm_2d_scene_player_append_scenes(  ptDispAdapter, 
                                         &this.use_as__arm_2d_scene_t, 

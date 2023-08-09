@@ -16,37 +16,93 @@
  * limitations under the License.
  */
 
-#ifndef __AMPLITUDE_DISPLAY_H__
-#define __AMPLITUDE_DISPLAY_H__
+#ifndef __amplitude_display_H__
+#define __amplitude_display_H__
 
 /*============================ INCLUDES ======================================*/
 #include "arm_2d.h"
+#include "./__common.h"
 
 #ifdef   __cplusplus
 extern "C" {
 #endif
 
+#if defined(__clang__)
+#   pragma clang diagnostic push
+#   pragma clang diagnostic ignored "-Wmissing-declarations"
+#   pragma clang diagnostic ignored "-Wmicrosoft-anon-tag"
+#   pragma clang diagnostic ignored "-Wpadded"
+#endif
+
+/*============================ MACROS ========================================*/
+
+/* OOC header, please DO NOT modify  */
+#ifdef __amplitude_display_IMPLEMENT__
+#   undef   __amplitude_display_IMPLEMENT__
+#   define  __ARM_2D_IMPL__
+#elif defined(__amplitude_display_INHERIT__)
+#   undef   __amplitude_display_INHERIT__
+#   define __ARM_2D_INHERIT__
+#endif
+#include "arm_2d_utils.h"
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
 /*============================ TYPES =========================================*/
-typedef struct amplitude_display_t {
-    uint32_t nbAmpValues;
-} amplitude_display_t;
+
+
+/*!
+ * \brief a user class for user defined control
+ */
+typedef struct amplitude_display_t amplitude_display_t;
+
+typedef struct amplitude_display_cfg_t {
+    uint16_t hwAmpValues;
+    int8_t chPadX;
+    int8_t chPadY;
+    arm_2d_tile_t tileBar;
+} amplitude_display_cfg_t;
+
+struct amplitude_display_t {
+
+ARM_PRIVATE(
+    amplitude_display_cfg_t tCFG;
+    
+    /* place your private member here, following two are examples */
+    int64_t lTimestamp[1];
+    uint8_t chOpacity;
+
+
+
+)
+    /* place your public member here */
+    
+};
 
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
 
 extern
-void amplitude_display_init(amplitude_display_t *ptCFG,int nbAmpValues);
+ARM_NONNULL(1)
+void amplitude_display_init( amplitude_display_t *ptThis, 
+                              amplitude_display_cfg_t *ptCFG);
 
 extern
-void amplitude_display_show(amplitude_display_t *ptCFG,
-	const arm_2d_tile_t *ptTarget, 
-	arm_2d_region_t *amplitudeRegion,
-	const q15_t *values,
-	int width,
-	int height,
-	int bIsNewFrame);
+ARM_NONNULL(1)
+void amplitude_display_depose( amplitude_display_t *ptThis);
+
+extern
+ARM_NONNULL(1)
+void amplitude_display_show(   amplitude_display_t *ptThis,
+                                const arm_2d_tile_t *ptTile, 
+                                const arm_2d_region_t *ptRegion,
+                                const q15_t *values,
+                                COLOUR_INT tColour,
+                                bool bIsNewFrame);
+
+
+#if defined(__clang__)
+#   pragma clang diagnostic pop
+#endif
 
 #ifdef   __cplusplus
 }
