@@ -55,24 +55,28 @@ extern "C" {
  */
 typedef struct amplitude_display2_t amplitude_display2_t;
 
+typedef struct amplitude_display2_dirty_region_t {
+    arm_2d_region_list_item_t tItem;
+
+    struct {
+        int16_t iYUPMax;
+        int16_t iYDownMin;
+    } Current, Last;
+} amplitude_display2_dirty_region_t;
+
 typedef struct amplitude_display2_cfg_t {
-    uint16_t hwAmpValues;
-    int8_t chPadX;
-    int8_t chPadY;
     arm_2d_tile_t tileBar;
+    uint16_t hwAmpValues;
+    uint16_t hwDirtyRegionCount;
+    amplitude_display2_dirty_region_t *ptDirtyRegions;
 } amplitude_display2_cfg_t;
 
 struct amplitude_display2_t {
 
 ARM_PRIVATE(
     amplitude_display2_cfg_t tCFG;
-    
-    /* place your private member here, following two are examples */
-    int64_t lTimestamp[1];
-    uint8_t chOpacity;
 
-
-
+    uint32_t q15DirtyRegionWidth;
 )
     /* place your public member here */
     
@@ -84,7 +88,8 @@ ARM_PRIVATE(
 extern
 ARM_NONNULL(1)
 void amplitude_display2_init( amplitude_display2_t *ptThis, 
-                              amplitude_display2_cfg_t *ptCFG);
+                              amplitude_display2_cfg_t *ptCFG,
+                              arm_2d_region_list_item_t **ppDirtyRegionList);
 
 extern
 ARM_NONNULL(1)

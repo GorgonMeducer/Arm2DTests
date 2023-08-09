@@ -165,12 +165,8 @@ void init_scenes ()
 #ifdef HOST
 int app_2d_main_thread (void *argument)
 {
-
-
-
     init_scenes();
     
-
     while(1) {
         if (arm_fsm_rt_cpl == disp_adapter0_task()) {
             VT_sdl_flush(1);
@@ -178,7 +174,7 @@ int app_2d_main_thread (void *argument)
             
             
         }
-        else
+        else if (NULL != currentScene)
         {
             //update_samples();
             arm2d_scene_cmsis_stream_new_spectrum(currentScene,fftAmp);

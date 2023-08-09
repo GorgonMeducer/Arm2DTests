@@ -64,7 +64,8 @@ void spectrum_display_init(spectrum_display_t *ptCFG,int nbFFTBins)
 #define PADX 4
 #define PADY 4
 #define PADFFT 6
-void spectrum_display_show(spectrum_display_t *ptCFG,
+
+arm_2d_size_t  spectrum_display_show(spectrum_display_t *ptCFG,
     const arm_2d_tile_t *ptTarget, 
     arm_2d_region_t *spectrumRegion, 
     const q15_t *fftSpectrum,
@@ -74,15 +75,6 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
 {
     int_fast16_t iWidth = width;
     int_fast16_t iHeight = height;
-
-    /* DIRTY TEST TO AVOID
-    REDRAWING WHEN IN NAVIGATION DIRTY REGION
-
-    */
-    if (ptTarget->tRegion.tLocation.iY<0)
-    {
-        return;
-    }
    
     arm_2d_region_t contentRegion = *spectrumRegion;
 
@@ -170,7 +162,7 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
     
     arm_2d_op_wait_async(NULL);
     
-
+   return contentRegion.tSize;
 }
 
 #if defined(__clang__)

@@ -137,7 +137,7 @@ void amplitude_display_show(amplitude_display_t *ptCFG,
     
     if (root == NULL)
     {
-        return;
+        return ;
     }
     else 
     {
@@ -231,8 +231,6 @@ if (!arm_2d_region_intersect(   &tValidRegion,
                                 {255,255,255,255});
     
     arm_2d_op_wait_async(NULL);
-    
-    
 }
 
 #if defined(__clang__)

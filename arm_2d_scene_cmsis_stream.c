@@ -244,6 +244,11 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
                                                 &logo);
             */
             
+            if (bIsNewFrame) {
+                this.use_as__arm_2d_scene_t.ptDirtyRegion[0].tRegion.tLocation = logo.tLocation;
+                this.use_as__arm_2d_scene_t.ptDirtyRegion[0].bIgnore = false;
+            }
+
             arm_2d_tile_copy_only(&c_tilecmsisLOGORGB565,
                                     ptTile,
                                     &logo);
@@ -254,19 +259,29 @@ IMPL_PFB_ON_DRAW(__pfb_draw_scene_cmsis_stream_handler)
         
         arm_2d_layout(__canvas) {
             __item_line_vertical(   ptTile->tRegion.tSize.iWidth,
-                                (ptTile->tRegion.tSize.iHeight >> 1)) {
-                spectrum_display_show(&(ptThis->tSpectrum),
-                    ptTile,
-                    &__item_region,
-                    ptThis->fftSpectrum,
-                    __item_region.tSize.iWidth - 10,
-                    __item_region.tSize.iHeight,
-                    bIsNewFrame);
+                                (   100)) {
+
                 
+
+                arm_2d_size_t tBarSize = spectrum_display_show(&(ptThis->tSpectrum),
+                                                                ptTile,
+                                                                &__item_region,
+                                                                ptThis->fftSpectrum,
+                                                                __item_region.tSize.iWidth - 10,
+                                                                __item_region.tSize.iHeight,
+                                                                bIsNewFrame);
+                
+                if (bIsNewFrame) {
+                    arm_2d_align_centre(__item_region, tBarSize) {
+                        this.use_as__arm_2d_scene_t.ptDirtyRegion[1].tRegion = __centre_region;
+                        this.use_as__arm_2d_scene_t.ptDirtyRegion[1].bIgnore = false;
+                    }
+                }
+
             }
 
             __item_line_vertical(   ptTile->tRegion.tSize.iWidth,
-                                (ptTile->tRegion.tSize.iHeight >> 1)) {
+                                ( 100)) {
 
                 amplitude_display2_show(&this.tAmplitude,
                                         ptTile,
@@ -306,16 +321,18 @@ user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int
     /*! define dirty regions */
     IMPL_ARM_2D_REGION_LIST(s_tDirtyRegions, static)
 
-       
+        ADD_REGION_TO_LIST(s_tDirtyRegions,
+
+            0,
+        ),
+
+
+        ADD_REGION_TO_LIST(s_tDirtyRegions,
+            0,
+        ),
+
         ADD_LAST_REGION_TO_LIST(s_tDirtyRegions,
-            .tLocation = {
-                .iX = 0,
-                .iY = 0,
-            },
-            .tSize = {
-                .iWidth = 240,
-                .iHeight = 240,
-            },
+            0,
         ),
         
 
@@ -329,6 +346,12 @@ user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int
             &ptDispAdapter->use_as__arm_2d_helper_pfb_t);
     
     
+    s_tDirtyRegions[0].bIgnore = true;
+    s_tDirtyRegions[0].tRegion.tSize = c_tilecmsisLOGORGB565.tRegion.tSize;
+
+    s_tDirtyRegions[1].bIgnore = true;
+    s_tDirtyRegions[2].bIgnore = true;
+
     if (NULL == ptThis) {
         ptThis = (user_scene_cmsis_stream_t *)malloc(sizeof(user_scene_cmsis_stream_t));
         assert(NULL != ptThis);
@@ -350,7 +373,7 @@ user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int
              */
             //.fnBackground   = &__pfb_draw_scene_cmsis_stream_background_handler,
             .fnScene        = &__pfb_draw_scene_cmsis_stream_handler,
-            //.ptDirtyRegion  = (arm_2d_region_list_item_t *)s_tDirtyRegions,
+            .ptDirtyRegion  = (arm_2d_region_list_item_t *)s_tDirtyRegions,
             
 
             //.fnOnBGStart    = &__on_scene_cmsis_stream_background_start,
@@ -367,18 +390,18 @@ user_scene_cmsis_stream_t *__arm_2d_scene_cmsis_stream_init(int nbFFTBins,   int
     spectrum_display_init(&(ptThis->tSpectrum),nbFFTBins);
 
     do {
-        impl_fb(AmpBar, 240 - 24, 120 - 16, uint8_t,
+        impl_fb(AmpBar, 240 - 24, 100, uint8_t,
             .tInfo.bHasEnforcedColour = true,
             .tInfo.tColourInfo.chScheme = ARM_2D_COLOUR_8BIT,
         );
-
+        static amplitude_display2_dirty_region_t s_tAmplitudeDirtyRegions[10];
         amplitude_display2_cfg_t tCFG = {
             .hwAmpValues = nbAmps,
-            .chPadX = 4,
-            .chPadY = 4,
             .tileBar = AmpBar,
+            .hwDirtyRegionCount = dimof(s_tAmplitudeDirtyRegions),
+            .ptDirtyRegions = s_tAmplitudeDirtyRegions,
         };
-        amplitude_display2_init(&(this.tAmplitude),&tCFG);
+        amplitude_display2_init(&(this.tAmplitude),&tCFG, &this.use_as__arm_2d_scene_t.ptDirtyRegion);
 
     } while(0);
     ptThis->pos=0;

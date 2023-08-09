@@ -64,7 +64,7 @@
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ PROTOTYPES ====================================*/
-static void __draw_line(uint32_t dx, 
+static int16_t __draw_line(uint32_t dx, 
                         uint32_t dy,
                         const arm_2d_tile_t *ptTarget,
                         uint32_t ax,
@@ -75,11 +75,43 @@ static void __draw_line(uint32_t dx,
 /*============================ IMPLEMENTATION ================================*/
 
 ARM_NONNULL(1)
-void amplitude_display2_init(amplitude_display2_t *ptThis, amplitude_display2_cfg_t *ptCFG)
+void amplitude_display2_init(amplitude_display2_t *ptThis, amplitude_display2_cfg_t *ptCFG,
+                            arm_2d_region_list_item_t **ppDirtyRegionList)
 {
     assert(NULL!= ptThis);
     memset(ptThis, 0, sizeof(amplitude_display2_t));
     this.tCFG = *ptCFG;
+
+    arm_2d_size_t tBarSize = this.tCFG.tileBar.tRegion.tSize;
+
+    int16_t iWidth = tBarSize.iWidth;
+
+    amplitude_display2_dirty_region_t *ptItem = this.tCFG.ptDirtyRegions;
+    uint_fast16_t hwCount = this.tCFG.hwDirtyRegionCount;
+
+    this.q15DirtyRegionWidth = (uint32_t)(1<<15) * iWidth / hwCount;
+    memset( ptItem, 0, 
+            sizeof(amplitude_display2_dirty_region_t) * hwCount);
+    uint32_t wX = 0;
+    do {
+        ptItem->Current.iYDownMin = INT16_MAX;
+        ptItem->Last.iYDownMin = INT16_MAX;
+        ptItem->tItem.tRegion.tSize.iWidth = (this.q15DirtyRegionWidth + (uint32_t)(1<<14)) >> 15;
+        ptItem->tItem.bIgnore = true;
+        
+        ptItem->tItem.ptNext = &((ptItem + 1)->tItem);
+        wX += this.q15DirtyRegionWidth;
+        ptItem++;
+    } while(--hwCount);
+
+
+    while(NULL != (*ppDirtyRegionList)) {
+        ppDirtyRegionList = &((*ppDirtyRegionList)->ptNext);
+    }
+
+    this.tCFG.ptDirtyRegions[this.tCFG.hwDirtyRegionCount-1].tItem.ptNext = (*ppDirtyRegionList);
+    (*ppDirtyRegionList) = &this.tCFG.ptDirtyRegions[0].tItem;
+
 }
 
 ARM_NONNULL(1)
@@ -99,32 +131,6 @@ void amplitude_display2_show( amplitude_display2_t *ptThis,
 {
     assert(NULL!= ptThis);
 
-    
-    if (bIsNewFrame) {
-        /* clear bar buffer */
-        memset(this.tCFG.tileBar.pchBuffer, 0, get_tile_buffer_size(this.tCFG.tileBar, uint8_t));
-
-        arm_2d_size_t tBarSize = this.tCFG.tileBar.tRegion.tSize;
-
-        int16_t iWidth = tBarSize.iWidth;
-        int16_t iHeight = tBarSize.iHeight;
-        uint32_t dx = (uint32_t)(1<<15) * iWidth / this.tCFG.hwAmpValues;
-        uint32_t dy= iHeight >> 1; 
-
-        uint32_t currentX= 0;
-        q15_t currentY=0;
-        currentY = (((q31_t) values[0] * ((iHeight>>1)-1)) >> 15);
-
-        /* draw bar buffer */
-        for(int i=1;i<this.tCFG.hwAmpValues;i++) {
-            q15_t newY = (((q31_t) values[i] * ((iHeight>>1)-1)) >> 15);
-            __draw_line(dx,dy,&this.tCFG.tileBar,currentX,currentY,newY);
-
-            currentX = currentX+dx;
-            currentY = newY;
-        }
-    }
-
     arm_2d_container(ptTile, __control, ptRegion) {
         /* put your drawing code inside here
          *    - &__control is the target tile (please do not use ptTile anymore)
@@ -132,6 +138,78 @@ void amplitude_display2_show( amplitude_display2_t *ptThis,
          */
 
         arm_2d_align_centre(__control_canvas, this.tCFG.tileBar.tRegion.tSize) {
+    
+            if (bIsNewFrame) {
+                /* clear bar buffer */
+                memset(this.tCFG.tileBar.pchBuffer, 0, get_tile_buffer_size(this.tCFG.tileBar, uint8_t));
+
+                arm_2d_size_t tBarSize = this.tCFG.tileBar.tRegion.tSize;
+
+                int16_t iWidth = tBarSize.iWidth;
+                int16_t iHeight = tBarSize.iHeight;
+                uint32_t dx = (uint32_t)(1<<15) * iWidth / this.tCFG.hwAmpValues;
+                uint32_t dy= iHeight >> 1; 
+
+                uint32_t currentX= 0;
+                q15_t currentY=0;
+                currentY = (((q31_t) values[0] * ((iHeight>>1)-1)) >> 15);
+
+                amplitude_display2_dirty_region_t *ptItem = this.tCFG.ptDirtyRegions;
+                uint32_t wPenTempLocation = 0;
+                uint_fast16_t hwIndex = 0;
+                ptItem->Current.iYDownMin = INT16_MAX;
+                ptItem->Current.iYUPMax = 0;
+
+                /* draw bar buffer */
+                for(int i=1;i<this.tCFG.hwAmpValues;i++) {
+                    q15_t newY = (((q31_t) values[i] * ((iHeight>>1)-1)) >> 15);
+                    int16_t iY = __draw_line(dx,dy,&this.tCFG.tileBar,currentX,currentY,newY);
+
+                    currentX = currentX+dx;
+                    currentY = newY;
+
+
+                    /* calculate dirty region */
+                    do {
+                        ptItem->Current.iYDownMin = MIN(ptItem->Current.iYDownMin, iY);
+                        ptItem->Current.iYUPMax = MAX(ptItem->Current.iYUPMax, iY);
+
+                        wPenTempLocation += dx;
+                        if (wPenTempLocation >= this.q15DirtyRegionWidth || i == (this.tCFG.hwAmpValues - 1)) {
+                            wPenTempLocation -= this.q15DirtyRegionWidth;
+
+                            int16_t iYUp = MAX(ptItem->Last.iYUPMax, ptItem->Current.iYUPMax);
+                            int16_t iYDown = MIN(ptItem->Last.iYDownMin, ptItem->Current.iYDownMin);
+
+                            ptItem->tItem.tRegion.tSize.iHeight = iYUp - iYDown + 1;
+                            arm_2d_location_t tLocation = {
+                                    .iX = (this.q15DirtyRegionWidth * hwIndex) >> 15,
+                                    .iY = iYDown,
+                                };
+                            tLocation.iX += __centre_region.tLocation.iX;
+                            tLocation.iY += __centre_region.tLocation.iY;
+
+                            ptItem->tItem.tRegion.tLocation = arm_2d_helper_pfb_get_absolute_location(
+                                                                &__control,
+                                                                tLocation);
+
+                            ptItem->Last = ptItem->Current;
+                            ptItem->tItem.bIgnore = false;
+
+                            ptItem++;
+                            hwIndex++;
+                            if (hwIndex < this.tCFG.hwDirtyRegionCount) {
+                                ptItem->Current.iYDownMin = INT16_MAX;
+                                ptItem->Current.iYUPMax = 0;
+                            }
+                        }
+                    } while(0);
+
+                    
+                }
+            }
+
+    
 
             draw_round_corner_box(
                                 &__control, 
@@ -159,7 +237,7 @@ void amplitude_display2_show( amplitude_display2_t *ptThis,
 }
 
 
-static void __draw_line(uint32_t dx, 
+static int16_t __draw_line(uint32_t dx, 
                         uint32_t dy,
                         const arm_2d_tile_t *ptTarget,
                         uint32_t ax,
@@ -180,7 +258,9 @@ static void __draw_line(uint32_t dx,
                   //printf("%d %d\n",tLocation.iX,tLocation.iY);
 
        arm_2d_c8bit_draw_point_fast(ptTarget,tLocation,255);
+       return tLocation.iY;
      } else {
+        int16_t iY = 0;
         int32_t refdelta = dx / (abs(by-ay)+1);
         int32_t delta;
         uint32_t x = ax;
@@ -190,11 +270,14 @@ static void __draw_line(uint32_t dx,
             start = ay;
             end = by;
             delta=refdelta;
+            iY = dy - end - 1;
         } else {
             start = by;
             end = ay;
             x = ax + dx;
             delta=-refdelta;
+
+            iY = dy - by;
         }
         for(int i=start;i<end;i++) {
             tLocation.iX = x>>15;tLocation.iY=dy-i;
@@ -204,6 +287,8 @@ static void __draw_line(uint32_t dx,
 
             x+=delta;
         }
+
+        return iY;
      }
 }
 

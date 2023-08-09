@@ -41,7 +41,7 @@ extern
 void spectrum_display_init(spectrum_display_t *ptCFG,int nbFFTBins);
 
 extern
-void spectrum_display_show(spectrum_display_t *ptCFG,
+arm_2d_size_t spectrum_display_show(spectrum_display_t *ptCFG,
 	const arm_2d_tile_t *ptTarget, 
 	arm_2d_region_t *spectrumRegion,
 	const q15_t *fftSpectrum,
