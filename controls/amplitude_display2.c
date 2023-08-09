@@ -133,13 +133,13 @@ void amplitude_display2_show( amplitude_display2_t *ptThis,
 
         arm_2d_align_centre(__control_canvas, this.tCFG.tileBar.tRegion.tSize) {
 
-            draw_round_corner_box(
+            /*draw_round_corner_box(
                                 &__control, 
                                 &__centre_region, 
                                 GLCD_COLOR_OLIVE, 
                                 70,
                                 bIsNewFrame);
-
+            */
 
             arm_2d_fill_colour_with_mask(
                 &__control,

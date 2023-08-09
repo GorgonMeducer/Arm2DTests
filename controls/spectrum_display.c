@@ -107,6 +107,7 @@ void spectrum_display_show(spectrum_display_t *ptCFG,
 
     arm_2d_op_wait_async(NULL);
     
+    
     // Conjugate part ignored
     uint32_t nbPts=(ptCFG->nbFFTbins>>1);
     if (nbPts > 0)
